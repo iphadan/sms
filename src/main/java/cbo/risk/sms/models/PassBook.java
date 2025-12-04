@@ -7,7 +7,6 @@ import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.envers.Audited;
-
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
@@ -31,7 +30,7 @@ public class PassBook {
     private String endSerialNum;
     @NotBlank
     @Column(nullable = false)
-    private int numOfBook;
+    private int numOfPad;
 
  @NotBlank
  @Column(name = "BRANCH_ID")
@@ -56,6 +55,7 @@ public class PassBook {
  @UpdateTimestamp
  @Column(name = "MODIFIED_TS",nullable = false)
  private LocalDateTime modifiedTimestamp;
+
 
 
 }

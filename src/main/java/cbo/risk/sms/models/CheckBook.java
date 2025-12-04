@@ -2,8 +2,6 @@ package cbo.risk.sms.models;
 
 import cbo.risk.sms.enums.CheckBookLeaveType;
 import cbo.risk.sms.enums.CheckBookType;
-import cbo.risk.sms.enums.PassBookCategory;
-import cbo.risk.sms.enums.PassBookType;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -35,7 +33,7 @@ public class CheckBook {
 
     @NotBlank
     @Column(nullable = false)
-    private int numOfBook;
+    private int numOfPad;
 
 
     @NotBlank

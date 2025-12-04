@@ -1,6 +1,5 @@
 package cbo.risk.sms.models;
 
-
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -10,22 +9,16 @@ import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 
-@Entity
 @Data
+@Entity
 @Audited
-public class Cpo {
+public class RequestPassBook {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String startingSerialNum;
-    private String endSerialNum;
-
-    @NotBlank
-    @Column(nullable = false)
-    private int numOfPad;
-
+    private String serialNum;
 
     @NotBlank
     @Column(name = "BRANCH_ID")
@@ -52,5 +45,4 @@ public class Cpo {
     @UpdateTimestamp
     @Column(name = "MODIFIED_TS",nullable = false)
     private LocalDateTime modifiedTimestamp;
-
 }
