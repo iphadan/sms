@@ -19,7 +19,9 @@ public class RequestPassBook {
     private Long id;
 
     private String serialNum;
-
+    private LocalDateTime receivedDate;
+    private LocalDateTime issuedDate;
+    private LocalDateTime returnedDate;
     @NotBlank
     @Column(name = "BRANCH_ID")
     private String branchId;

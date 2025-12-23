@@ -1,38 +1,27 @@
 package cbo.risk.sms.models;
 
+import cbo.risk.sms.enums.TransactionType;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.envers.Audited;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 
-@Data
 @Entity
-@Audited
-public class RequestCheckBook {
-
+@Data
+public class StockTransaction {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    private String serialNum;
-    private LocalDateTime receivedDate;
-    private LocalDateTime issuedDate;
-    private LocalDateTime returnedDate;
-    @NotBlank
-    @Column(name = "BRANCH_ID")
-    private String branchId;
-
-
-    @NotBlank
-    @Column(name = "SUBPROCESS_ID")
-    private String subProcessId;
-    @NotBlank
-    @Column(name = "PROCESS_ID")
-    private String processId;
+    @GeneratedValue
+    private Long transactionId;
+    private TransactionType type; // RECEIVE, ISSUE, RETURN, REVERSE
+    private String serialNumber;
+    private String issuerId;
+    private String receiverId;
 
     @NotBlank
     @Column(nullable = false)
@@ -46,5 +35,4 @@ public class RequestCheckBook {
     @UpdateTimestamp
     @Column(name = "MODIFIED_TS",nullable = false)
     private LocalDateTime modifiedTimestamp;
-
 }

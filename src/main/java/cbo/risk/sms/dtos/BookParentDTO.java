@@ -1,27 +1,24 @@
-package cbo.risk.sms.models;
+package cbo.risk.sms.dtos;
 
-import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.envers.Audited;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 
-@Data
-@Entity
-@Audited
-public class RequestCheckBook {
+public class BookParentDTO {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @NotBlank
+    @Column(nullable = false)
+    private int numOfPad;
+    private int used;
 
-    private String serialNum;
-    private LocalDateTime receivedDate;
-    private LocalDateTime issuedDate;
-    private LocalDateTime returnedDate;
+
     @NotBlank
     @Column(name = "BRANCH_ID")
     private String branchId;
@@ -37,6 +34,7 @@ public class RequestCheckBook {
     @NotBlank
     @Column(nullable = false)
     private String createdBy;
+
     @NotBlank
     @Column(nullable = false)
     private String lastUpdatedBy;
@@ -46,5 +44,4 @@ public class RequestCheckBook {
     @UpdateTimestamp
     @Column(name = "MODIFIED_TS",nullable = false)
     private LocalDateTime modifiedTimestamp;
-
 }
