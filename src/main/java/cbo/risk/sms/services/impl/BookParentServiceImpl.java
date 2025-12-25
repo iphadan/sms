@@ -1,6 +1,8 @@
 package cbo.risk.sms.services.impl;
 
 import cbo.risk.sms.dtos.*;
+import cbo.risk.sms.enums.CheckBookType;
+import cbo.risk.sms.enums.ParentBookType;
 import cbo.risk.sms.enums.PassBookCategory;
 import cbo.risk.sms.enums.PassBookType;
 import cbo.risk.sms.exceptions.ResourceNotFoundException;
@@ -45,6 +47,7 @@ public class BookParentServiceImpl implements BookParentService {
 
         // 1. Create Parent
         BookParent parent = createParent(registrationDTO);
+        parent.setParentBookType(ParentBookType.valueOf(registrationDTO.getParentBookType().name()));
         parent.setBatchReceivedDate(LocalDateTime.now());
         BookParent savedParent = bookParentRepository.save(parent);
 
@@ -81,12 +84,13 @@ public class BookParentServiceImpl implements BookParentService {
     public BatchResponseDTO registerCpoBatch(BatchRegistrationDTO registrationDTO) {
         log.info("Registering CPO batch: {} to {}",
                 registrationDTO.getStartSerial(), registrationDTO.getEndSerial());
-
+        System.out.println("1");
         validateBatchRegistration(registrationDTO);
 
         // 1. Create Parent
         BookParent parent = createParent(registrationDTO);
         parent.setBatchReceivedDate(LocalDateTime.now());
+        parent.setParentBookType(ParentBookType.valueOf(registrationDTO.getParentBookType().name()));
         BookParent savedParent = bookParentRepository.save(parent);
 
         // 2. Generate serial numbers and create CPO children
@@ -122,10 +126,11 @@ public class BookParentServiceImpl implements BookParentService {
                 registrationDTO.getStartSerial(), registrationDTO.getEndSerial());
 
         validateBatchRegistration(registrationDTO);
-
+        System.out.println("1");
         // 1. Create Parent
         BookParent parent = createParent(registrationDTO);
         parent.setBatchReceivedDate(LocalDateTime.now());
+        parent.setParentBookType(ParentBookType.valueOf(registrationDTO.getParentBookType().name()));
         BookParent savedParent = bookParentRepository.save(parent);
 
         // 2. Generate serial numbers and create PassBook children

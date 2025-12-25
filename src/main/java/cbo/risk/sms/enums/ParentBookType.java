@@ -1,5 +1,5 @@
 package cbo.risk.sms.enums;
 
-public enum BookType {
+public enum ParentBookType {
     CPO,CHECK_BOOK,PASS_BOOK
 }

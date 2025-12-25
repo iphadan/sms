@@ -38,6 +38,8 @@ public class BookParentController {
     })
     public ResponseEntity<BatchResponseDTO> registerCheckBookBatch(
             @Valid @RequestBody BatchRegistrationDTO registrationDTO) {
+        System.out.println(registrationDTO.getParentBookType());
+        System.out.println(registrationDTO.getCheckBookType());
         BatchResponseDTO response = bookParentService.registerCheckBookBatch(registrationDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -46,6 +48,7 @@ public class BookParentController {
     @Operation(summary = "Register a new batch of CPOs")
     public ResponseEntity<BatchResponseDTO> registerCpoBatch(
             @Valid @RequestBody BatchRegistrationDTO registrationDTO) {
+        System.out.println(registrationDTO);
         BatchResponseDTO response = bookParentService.registerCpoBatch(registrationDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -54,6 +57,7 @@ public class BookParentController {
     @Operation(summary = "Register a new batch of PassBooks")
     public ResponseEntity<BatchResponseDTO> registerPassBookBatch(
             @Valid @RequestBody BatchRegistrationDTO registrationDTO) {
+        System.out.println(registrationDTO);
         BatchResponseDTO response = bookParentService.registerPassBookBatch(registrationDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -89,6 +93,8 @@ public class BookParentController {
                 .map(parent -> {
                     BatchResponseDTO response = new BatchResponseDTO();
                     response.setParentId(parent.getId());
+                    response.setParentBookType(parent.getParentBookType().name());
+                    response.setBookType(parent.getParentBookType().name());
                     response.setStartSerial(parent.getStartingSerial());
                     response.setEndSerial(parent.getEndingSerial());
                     response.setNumOfPad(parent.getNumOfPad());

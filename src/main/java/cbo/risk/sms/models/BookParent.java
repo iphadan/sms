@@ -1,6 +1,6 @@
 package cbo.risk.sms.models;
 
-import cbo.risk.sms.enums.BookType;
+import cbo.risk.sms.enums.ParentBookType;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -29,9 +29,11 @@ public class BookParent {
 @Column(nullable = false)
     private int numOfPad;           // Total number of pads in this batch
 
-    private int used = 0;           // Number of pads that have been issued (not returned)
-    @Column(nullable = false)
-private BookType bookType;
+    private int used = 0;// Number of pads that have been issued (not returned)
+
+    @Enumerated(EnumType.STRING)
+    @Column( nullable = false)
+    private ParentBookType parentBookType;
     // available = numOfPad - used
 
     @NotBlank

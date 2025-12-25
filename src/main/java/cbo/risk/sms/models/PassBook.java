@@ -17,8 +17,7 @@ import java.time.LocalDateTime;
 @Audited
 
 
-@NoArgsConstructor
-@AllArgsConstructor
+
 public class PassBook {
    @Id
    @GeneratedValue(strategy = GenerationType.IDENTITY)

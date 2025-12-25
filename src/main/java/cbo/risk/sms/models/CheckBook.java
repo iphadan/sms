@@ -9,15 +9,15 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
+
 @Data
-@Entity
+
 @Audited
-@Setter
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
+
+@Entity
 public class CheckBook {
 
     @Id
@@ -26,11 +26,11 @@ public class CheckBook {
 
 
 
-    @NotBlank
+    @NotNull
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private CheckBookType checkBookType;
-    @NotBlank
+    @NotNull
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private CheckBookLeaveType checkBookLeaveType;
@@ -76,136 +76,68 @@ public class CheckBook {
     private LocalDateTime returnedDate;
 
 
-    public Long getId() {
-        return id;
-    }
-
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public CheckBookType getCheckBookType() {
-        return checkBookType;
     }
 
     public void setCheckBookType(CheckBookType checkBookType) {
         this.checkBookType = checkBookType;
     }
 
-    public CheckBookLeaveType getCheckBookLeaveType() {
-        return checkBookLeaveType;
-    }
-
     public void setCheckBookLeaveType(CheckBookLeaveType checkBookLeaveType) {
         this.checkBookLeaveType = checkBookLeaveType;
-    }
-
-    public BookParent getBookParent() {
-        return bookParent;
     }
 
     public void setBookParent(BookParent bookParent) {
         this.bookParent = bookParent;
     }
 
-    public String getBranchId() {
-        return branchId;
-    }
-
     public void setBranchId(String branchId) {
         this.branchId = branchId;
-    }
-
-    public String getSubProcessId() {
-        return subProcessId;
     }
 
     public void setSubProcessId(String subProcessId) {
         this.subProcessId = subProcessId;
     }
 
-    public String getProcessId() {
-        return processId;
-    }
-
     public void setProcessId(String processId) {
         this.processId = processId;
-    }
-
-    public String getCreatedBy() {
-        return createdBy;
     }
 
     public void setCreatedBy(String createdBy) {
         this.createdBy = createdBy;
     }
 
-    public String getLastUpdatedBy() {
-        return lastUpdatedBy;
-    }
-
     public void setLastUpdatedBy(String lastUpdatedBy) {
         this.lastUpdatedBy = lastUpdatedBy;
-    }
-
-    public LocalDateTime getCreatedTimestamp() {
-        return createdTimestamp;
     }
 
     public void setCreatedTimestamp(LocalDateTime createdTimestamp) {
         this.createdTimestamp = createdTimestamp;
     }
 
-    public LocalDateTime getModifiedTimestamp() {
-        return modifiedTimestamp;
-    }
-
     public void setModifiedTimestamp(LocalDateTime modifiedTimestamp) {
         this.modifiedTimestamp = modifiedTimestamp;
-    }
-
-    public String getSerialNumber() {
-        return serialNumber;
     }
 
     public void setSerialNumber(String serialNumber) {
         this.serialNumber = serialNumber;
     }
 
-    public LocalDateTime getReceivedDate() {
-        return receivedDate;
-    }
-
     public void setReceivedDate(LocalDateTime receivedDate) {
         this.receivedDate = receivedDate;
-    }
-
-    public String getIssuedBy() {
-        return issuedBy;
     }
 
     public void setIssuedBy(String issuedBy) {
         this.issuedBy = issuedBy;
     }
 
-    public String getReceivedBy() {
-        return receivedBy;
-    }
-
     public void setReceivedBy(String receivedBy) {
         this.receivedBy = receivedBy;
     }
 
-    public LocalDateTime getIssuedDate() {
-        return issuedDate;
-    }
-
     public void setIssuedDate(LocalDateTime issuedDate) {
         this.issuedDate = issuedDate;
-    }
-
-    public LocalDateTime getReturnedDate() {
-        return returnedDate;
     }
 
     public void setReturnedDate(LocalDateTime returnedDate) {
