@@ -1,5 +1,6 @@
 package cbo.risk.sms.models;
 
+import cbo.risk.sms.enums.BookType;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -25,13 +26,12 @@ public class BookParent {
     @NotBlank
     private String endingSerial;    // Last serial in the batch range
 
-    @NotBlank
-    @Column(nullable = false)
+@Column(nullable = false)
     private int numOfPad;           // Total number of pads in this batch
 
     private int used = 0;           // Number of pads that have been issued (not returned)
-
-
+    @Column(nullable = false)
+private BookType bookType;
     // available = numOfPad - used
 
     @NotBlank

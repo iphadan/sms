@@ -1,6 +1,8 @@
 package cbo.risk.sms.services.impl;
 
 import cbo.risk.sms.dtos.*;
+import cbo.risk.sms.enums.PassBookCategory;
+import cbo.risk.sms.enums.PassBookType;
 import cbo.risk.sms.exceptions.ResourceNotFoundException;
 import cbo.risk.sms.exceptions.BusinessRuleException;
 import cbo.risk.sms.models.*;
@@ -137,8 +139,8 @@ public class BookParentServiceImpl implements BookParentService {
             PassBook passBook = new PassBook();
             passBook.setSerialNumber(serial); // Assuming you added serialNumber to PassBook model
             passBook.setBookParent(savedParent);
-            passBook.setPassBookType(registrationDTO.getPassBookType());
-            passBook.setPassBookCategory(registrationDTO.getPassBookCategory());
+            passBook.setPassBookType(PassBookType.valueOf(registrationDTO.getPassBookType().name()));
+            passBook.setPassBookCategory(PassBookCategory.valueOf(registrationDTO.getPassBookCategory().name()));
             passBook.setCreatedBy(registrationDTO.getCreatedBy());
             passBook.setLastUpdatedBy(registrationDTO.getCreatedBy());
             passBook.setBranchId(registrationDTO.getBranchId());

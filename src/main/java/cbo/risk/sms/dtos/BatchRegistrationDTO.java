@@ -1,9 +1,6 @@
 package cbo.risk.sms.dtos;
 
-import cbo.risk.sms.enums.CheckBookLeaveType;
-import cbo.risk.sms.enums.CheckBookType;
-import cbo.risk.sms.enums.PassBookCategory;
-import cbo.risk.sms.enums.PassBookType;
+import cbo.risk.sms.enums.*;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,14 +13,16 @@ import javax.validation.constraints.NotNull;
 @Data
 public class BatchRegistrationDTO {
 
-    @NotBlank(message = "Book type is required")
-    private String bookType; // "CHECKBOOK", "CPO", "PASSBOOK"
+    @NotNull(message = "Book type is required")
+    private BookType bookType; // "CHECKBOOK", "CPO", "PASSBOOK"
 
     @NotBlank(message = "Starting serial is required")
     private String startSerial;
 
     @NotBlank(message = "Ending serial is required")
     private String endSerial;
+    @NotNull(message = "Number of Pads is required")
+    private Integer numOfPad;
 
     // For CheckBook
     private CheckBookType checkBookType;
@@ -45,11 +44,11 @@ public class BatchRegistrationDTO {
     @NotBlank(message = "Creator is required")
     private String createdBy;
 
-    public String getBookType() {
+    public BookType getBookType() {
         return bookType;
     }
 
-    public void setBookType(String bookType) {
+    public void setBookType(BookType bookType) {
         this.bookType = bookType;
     }
 
