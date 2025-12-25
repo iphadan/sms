@@ -1,9 +1,12 @@
 package cbo.risk.sms.dtos;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
-
+@Getter
+@Setter
 
 public class IssueRequestDTO {
     @NotBlank(message = "Serial number is required")

@@ -8,6 +8,9 @@ import cbo.risk.sms.repositories.*;
 import cbo.risk.sms.services.BookParentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,18 +19,24 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class BookParentServiceImpl implements BookParentService {
+    private static final Logger log = LoggerFactory.getLogger(BookParentServiceImpl.class);
+    @Autowired
+    private BookParentRepository bookParentRepository;
 
-    private final BookParentRepository bookParentRepository;
-    private final CheckBookRepository checkBookRepository;
-    private final CpoRepository cpoRepository;
-    private final PassBookRepository passBookRepository;
+    @Autowired
+    private CheckBookRepository checkBookRepository;
+
+    @Autowired
+    private CpoRepository cpoRepository;
+
+    @Autowired
+    private PassBookRepository passBookRepository;
 
     @Override
     @Transactional
     public BatchResponseDTO registerCheckBookBatch(BatchRegistrationDTO registrationDTO) {
-//        log.info("Registering CheckBook batch: {} to {}",
+        log.info("Registering CheckBook batch: {} to {}",
                 registrationDTO.getStartSerial(), registrationDTO.getEndSerial());
 
         validateBatchRegistration(registrationDTO);
@@ -60,7 +69,7 @@ public class BookParentServiceImpl implements BookParentService {
         }
 
         checkBookRepository.saveAll(checkBooks);
-//        log.info("Created {} CheckBooks for parent ID: {}", checkBooks.size(), savedParent.getId());
+        log.info("Created {} CheckBooks for parent ID: {}", checkBooks.size(), savedParent.getId());
 
         return createBatchResponse(savedParent, "CHECKBOOK", checkBooks.size());
     }
@@ -68,7 +77,7 @@ public class BookParentServiceImpl implements BookParentService {
     @Override
     @Transactional
     public BatchResponseDTO registerCpoBatch(BatchRegistrationDTO registrationDTO) {
-//        log.info("Registering CPO batch: {} to {}",
+        log.info("Registering CPO batch: {} to {}",
                 registrationDTO.getStartSerial(), registrationDTO.getEndSerial());
 
         validateBatchRegistration(registrationDTO);
@@ -99,7 +108,7 @@ public class BookParentServiceImpl implements BookParentService {
         }
 
         cpoRepository.saveAll(cpos);
-//        log.info("Created {} CPOs for parent ID: {}", cpos.size(), savedParent.getId());
+        log.info("Created {} CPOs for parent ID: {}", cpos.size(), savedParent.getId());
 
         return createBatchResponse(savedParent, "CPO", cpos.size());
     }
@@ -107,7 +116,7 @@ public class BookParentServiceImpl implements BookParentService {
     @Override
     @Transactional
     public BatchResponseDTO registerPassBookBatch(BatchRegistrationDTO registrationDTO) {
-//        log.info("Registering PassBook batch: {} to {}",
+        log.info("Registering PassBook batch: {} to {}",
                 registrationDTO.getStartSerial(), registrationDTO.getEndSerial());
 
         validateBatchRegistration(registrationDTO);
@@ -140,7 +149,7 @@ public class BookParentServiceImpl implements BookParentService {
         }
 
         passBookRepository.saveAll(passBooks);
-//        log.info("Created {} PassBooks for parent ID: {}", passBooks.size(), savedParent.getId());
+        log.info("Created {} PassBooks for parent ID: {}", passBooks.size(), savedParent.getId());
 
         return createBatchResponse(savedParent, "PASSBOOK", passBooks.size());
     }
@@ -148,7 +157,7 @@ public class BookParentServiceImpl implements BookParentService {
     @Override
     @Transactional
     public BatchResponseDTO issueBook(IssueRequestDTO issueRequest) {
-//        log.info("Issuing book with serial: {}", issueRequest.getSerialNumber());
+        log.info("Issuing book with serial: {}", issueRequest.getSerialNumber());
 
         // Find which type of book this is
         Optional<CheckBook> checkBookOpt = checkBookRepository.findBySerialNumber(issueRequest.getSerialNumber());
@@ -217,7 +226,7 @@ public class BookParentServiceImpl implements BookParentService {
         parent.setLastUpdatedBy(issueRequest.getIssuedBy());
         bookParentRepository.save(parent);
 
-//        log.info("Book {} issued successfully. Parent used count: {}",
+        log.info("Book {} issued successfully. Parent used count: {}",
                 issueRequest.getSerialNumber(), parent.getUsed());
 
         return createBatchResponse(parent, bookType, 0);
@@ -226,7 +235,7 @@ public class BookParentServiceImpl implements BookParentService {
     @Override
     @Transactional
     public BatchResponseDTO returnBook(ReturnRequestDTO returnRequest) {
-//        log.info("Returning book with serial: {}", returnRequest.getSerialNumber());
+        log.info("Returning book with serial: {}", returnRequest.getSerialNumber());
 
         // Find which type of book this is
         Optional<CheckBook> checkBookOpt = checkBookRepository.findBySerialNumber(returnRequest.getSerialNumber());
@@ -282,7 +291,7 @@ public class BookParentServiceImpl implements BookParentService {
         parent.setLastUpdatedBy(returnRequest.getReturnedBy());
         bookParentRepository.save(parent);
 
-//        log.info("Book {} returned successfully. Parent used count: {}",
+        log.info("Book {} returned successfully. Parent used count: {}",
                 returnRequest.getSerialNumber(), parent.getUsed());
 
         return createBatchResponse(parent, bookType, 0);
@@ -569,7 +578,7 @@ public class BookParentServiceImpl implements BookParentService {
         }
 
         bookParentRepository.delete(parent);
-//        log.info("Deleted BookParent with ID: {}", id);
+        log.info("Deleted BookParent with ID: {}", id);
     }
 
     @Override

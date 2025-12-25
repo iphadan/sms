@@ -3,13 +3,20 @@ package cbo.risk.sms.dtos;
 import cbo.risk.sms.enums.PassBookCategory;
 import cbo.risk.sms.enums.PassBookType;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 @Data
+@Getter
+@Setter
 public class PassBookCreateDTO {
+    @NotBlank(message = "Serial number is required")
+    private String serialNumber;
+
     @NotNull(message = "PassBook type is required")
     private PassBookType passBookType;
 
@@ -20,6 +27,8 @@ public class PassBookCreateDTO {
 
     @NotNull(message = "Number of pads is required")
     private int numOfPad;
+
+    private Long bookParentId; // Optional parent batch reference
 
     @NotBlank(message = "Branch ID is required")
     private String branchId;

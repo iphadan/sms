@@ -1,8 +1,11 @@
 package cbo.risk.sms.dtos;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-
+@Getter
+@Setter
 public class BatchResponseDTO {
     private Long parentId;
     private String bookType;

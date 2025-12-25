@@ -24,6 +24,58 @@ public class CheckBook {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+
+
+    @NotBlank
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private CheckBookType checkBookType;
+    @NotBlank
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private CheckBookLeaveType checkBookLeaveType;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "book_parent_id", nullable = false)
+    private BookParent bookParent;
+
+
+
+
+    @NotBlank
+    @Column(name = "BRANCH_ID")
+    private String branchId;
+
+
+    @NotBlank
+    @Column(name = "SUBPROCESS_ID")
+    private String subProcessId;
+    @NotBlank
+    @Column(name = "PROCESS_ID")
+    private String processId;
+
+    @NotBlank
+    @Column(nullable = false)
+    private String createdBy;
+
+    @NotBlank
+    @Column(nullable = false)
+    private String lastUpdatedBy;
+    @Column(name = "CREATED_TS",nullable = false)
+    @CreationTimestamp
+    private LocalDateTime createdTimestamp;
+    @UpdateTimestamp
+    @Column(name = "MODIFIED_TS",nullable = false)
+    private LocalDateTime modifiedTimestamp;
+    @NotBlank
+    @Column(nullable = false)
+    private String serialNumber;
+    private LocalDateTime receivedDate;
+    private String issuedBy;
+    private String receivedBy;
+    private LocalDateTime issuedDate;
+    private LocalDateTime returnedDate;
+
+
     public Long getId() {
         return id;
     }
@@ -159,54 +211,4 @@ public class CheckBook {
     public void setReturnedDate(LocalDateTime returnedDate) {
         this.returnedDate = returnedDate;
     }
-
-    @NotBlank
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private CheckBookType checkBookType;
-    @NotBlank
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private CheckBookLeaveType checkBookLeaveType;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "book_parent_id", nullable = false)
-    private BookParent bookParent;
-
-
-
-
-    @NotBlank
-    @Column(name = "BRANCH_ID")
-    private String branchId;
-
-
-    @NotBlank
-    @Column(name = "SUBPROCESS_ID")
-    private String subProcessId;
-    @NotBlank
-    @Column(name = "PROCESS_ID")
-    private String processId;
-
-    @NotBlank
-    @Column(nullable = false)
-    private String createdBy;
-
-    @NotBlank
-    @Column(nullable = false)
-    private String lastUpdatedBy;
-    @Column(name = "CREATED_TS",nullable = false)
-    @CreationTimestamp
-    private LocalDateTime createdTimestamp;
-    @UpdateTimestamp
-    @Column(name = "MODIFIED_TS",nullable = false)
-    private LocalDateTime modifiedTimestamp;
-    @NotBlank
-    @Column(nullable = false)
-    private String serialNumber;
-    private LocalDateTime receivedDate;
-    private String issuedBy;
-    private String receivedBy;
-    private LocalDateTime issuedDate;
-    private LocalDateTime returnedDate;
-
 }

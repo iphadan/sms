@@ -1,9 +1,15 @@
 package cbo.risk.sms.dtos;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 
 @Data
+@Getter
+@Setter
+
 public abstract class BaseStockDTO {
     private Long id;
     private LocalDateTime receivedDate;
