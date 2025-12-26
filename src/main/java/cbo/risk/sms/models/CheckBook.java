@@ -68,7 +68,11 @@ public class CheckBook {
     private LocalDateTime modifiedTimestamp;
     @NotBlank
     @Column(nullable = false)
-    private String serialNumber;
+    private String startSerialNumber;
+    @NotBlank
+    @Column(nullable = false)
+    private String endSerialNumber;
+
     private LocalDateTime receivedDate;
     private String issuedBy;
     private String receivedBy;
@@ -76,71 +80,5 @@ public class CheckBook {
     private LocalDateTime returnedDate;
 
 
-    public void setId(Long id) {
-        this.id = id;
-    }
 
-    public void setCheckBookType(CheckBookType checkBookType) {
-        this.checkBookType = checkBookType;
-    }
-
-    public void setCheckBookLeaveType(CheckBookLeaveType checkBookLeaveType) {
-        this.checkBookLeaveType = checkBookLeaveType;
-    }
-
-    public void setBookParent(BookParent bookParent) {
-        this.bookParent = bookParent;
-    }
-
-    public void setBranchId(String branchId) {
-        this.branchId = branchId;
-    }
-
-    public void setSubProcessId(String subProcessId) {
-        this.subProcessId = subProcessId;
-    }
-
-    public void setProcessId(String processId) {
-        this.processId = processId;
-    }
-
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public void setLastUpdatedBy(String lastUpdatedBy) {
-        this.lastUpdatedBy = lastUpdatedBy;
-    }
-
-    public void setCreatedTimestamp(LocalDateTime createdTimestamp) {
-        this.createdTimestamp = createdTimestamp;
-    }
-
-    public void setModifiedTimestamp(LocalDateTime modifiedTimestamp) {
-        this.modifiedTimestamp = modifiedTimestamp;
-    }
-
-    public void setSerialNumber(String serialNumber) {
-        this.serialNumber = serialNumber;
-    }
-
-    public void setReceivedDate(LocalDateTime receivedDate) {
-        this.receivedDate = receivedDate;
-    }
-
-    public void setIssuedBy(String issuedBy) {
-        this.issuedBy = issuedBy;
-    }
-
-    public void setReceivedBy(String receivedBy) {
-        this.receivedBy = receivedBy;
-    }
-
-    public void setIssuedDate(LocalDateTime issuedDate) {
-        this.issuedDate = issuedDate;
-    }
-
-    public void setReturnedDate(LocalDateTime returnedDate) {
-        this.returnedDate = returnedDate;
-    }
 }

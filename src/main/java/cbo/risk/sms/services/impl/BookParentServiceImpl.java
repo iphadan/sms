@@ -40,45 +40,55 @@ public class BookParentServiceImpl implements BookParentService {
     @Override
     @Transactional
     public BatchResponseDTO registerCheckBookBatch(BatchRegistrationDTO registrationDTO) {
-        log.info("Registering CheckBook batch: {} to {}",
-                registrationDTO.getStartSerial(), registrationDTO.getEndSerial());
+        log.info("Registering CheckBook batch: {} to {}, {} leaves",
+                registrationDTO.getStartSerial(), registrationDTO.getEndSerial(),
+                registrationDTO.getCheckBookLeaveType());
 
+        // 1. Validate batch registration
         validateBatchRegistration(registrationDTO);
 
-        // 1. Create Parent
+        // 2. Calculate number of checkbooks based on leaves per checkbook
+        int leavesPerCheckBook = registrationDTO.getCheckBookLeaveType().getNumberOfLeaves();
+
+        // Extract start and end numbers
+        int startNum = extractNumber(registrationDTO.getStartSerial());
+        int endNum = extractNumber(registrationDTO.getEndSerial());
+
+        // Calculate total pages and number of checkbooks
+        int totalPages = endNum - startNum + 1;
+
+        // Validate that total pages is divisible by leaves per checkbook
+        if (totalPages % leavesPerCheckBook != 0) {
+            throw new BusinessRuleException(
+                    String.format("Total pages %d is not divisible by %d leaves per checkbook. " +
+                                    "Checkbook range must be exact multiples.",
+                            totalPages, leavesPerCheckBook));
+        }
+
+        int numberOfCheckBooks = totalPages / leavesPerCheckBook;
+
+        // 3. Create Parent with the new fields
         BookParent parent = createParent(registrationDTO);
         parent.setParentBookType(ParentBookType.valueOf(registrationDTO.getParentBookType().name()));
         parent.setBatchReceivedDate(LocalDateTime.now());
+
         BookParent savedParent = bookParentRepository.save(parent);
 
-        // 2. Generate serial numbers and create CheckBook children
-        List<String> serials = generateSerials(
+        // 4. Generate individual checkbooks with their own start/end serial ranges
+        List<CheckBook> checkBooks = generateCheckBooksFromRange(
                 registrationDTO.getStartSerial(),
-                registrationDTO.getEndSerial()
+                registrationDTO.getEndSerial(),
+                leavesPerCheckBook,
+                savedParent,
+                registrationDTO
         );
 
-        List<CheckBook> checkBooks = new ArrayList<>();
-        for (String serial : serials) {
-            CheckBook checkBook = new CheckBook();
-            checkBook.setSerialNumber(serial);
-            checkBook.setBookParent(savedParent);
-            checkBook.setCheckBookType(registrationDTO.getCheckBookType());
-            checkBook.setCheckBookLeaveType(registrationDTO.getCheckBookLeaveType());
-            checkBook.setCreatedBy(registrationDTO.getCreatedBy());
-            checkBook.setLastUpdatedBy(registrationDTO.getCreatedBy());
-            checkBook.setBranchId(registrationDTO.getBranchId());
-            checkBook.setSubProcessId(registrationDTO.getSubProcessId());
-            checkBook.setProcessId(registrationDTO.getProcessId());
-
-            checkBooks.add(checkBook);
-        }
-
         checkBookRepository.saveAll(checkBooks);
-        log.info("Created {} CheckBooks for parent ID: {}", checkBooks.size(), savedParent.getId());
+        log.info("Created {} CheckBooks for parent ID: {}. Each with {} leaves.",
+                checkBooks.size(), savedParent.getId(), leavesPerCheckBook);
 
-        return createBatchResponse(savedParent, "CHECKBOOK", checkBooks.size());
+        return createBatchResponse(savedParent, "CHECKBOOK",numberOfCheckBooks);
     }
-
     @Override
     @Transactional
     public BatchResponseDTO registerCpoBatch(BatchRegistrationDTO registrationDTO) {
@@ -161,82 +171,83 @@ public class BookParentServiceImpl implements BookParentService {
         return createBatchResponse(savedParent, "PASSBOOK", passBooks.size());
     }
 
-    @Override
-    @Transactional
-    public BatchResponseDTO issueBook(IssueRequestDTO issueRequest) {
-        log.info("Issuing book with serial: {}", issueRequest.getSerialNumber());
-
-        // Find which type of book this is
-        Optional<CheckBook> checkBookOpt = checkBookRepository.findBySerialNumber(issueRequest.getSerialNumber());
-        Optional<Cpo> cpoOpt = cpoRepository.findBySerialNumber(issueRequest.getSerialNumber());
-        Optional<PassBook> passBookOpt = passBookRepository.findBySerialNumber(issueRequest.getSerialNumber());
-
-        BookParent parent = null;
-        String bookType = "";
-
-        if (checkBookOpt.isPresent()) {
-            CheckBook checkBook = checkBookOpt.get();
-            validateIssuance(checkBook, issueRequest);
-
-            // Check sequential issuance rule
-            validateSequentialIssuance(checkBook, issueRequest.getBranchId());
-
-            // Update CheckBook
-            checkBook.setIssuedDate(LocalDateTime.now());
-            checkBook.setIssuedBy(issueRequest.getIssuedBy());
-            checkBook.setLastUpdatedBy(issueRequest.getIssuedBy());
-            checkBookRepository.save(checkBook);
-
-            parent = checkBook.getBookParent();
-            bookType = "CHECKBOOK";
-
-        } else if (cpoOpt.isPresent()) {
-            Cpo cpo = cpoOpt.get();
-            validateIssuance(cpo, issueRequest);
-
-            // Check sequential issuance rule
-            validateSequentialIssuance(cpo, issueRequest.getBranchId());
-
-            // Update CPO
-            cpo.setIssuedDate(LocalDateTime.now());
-            cpo.setReceivedBy(issueRequest.getIssuedTo());
-            cpo.setIssuedBy(issueRequest.getIssuedBy());
-            cpo.setLastUpdatedBy(issueRequest.getIssuedBy());
-            cpoRepository.save(cpo);
-
-            parent = cpo.getBookParent();
-            bookType = "CPO";
-
-        } else if (passBookOpt.isPresent()) {
-            PassBook passBook = passBookOpt.get();
-            validateIssuance(passBook, issueRequest);
-
-            // Check sequential issuance rule
-            validateSequentialIssuance(passBook, issueRequest.getBranchId());
-
-            // Update PassBook
-            passBook.setIssuedDate(LocalDateTime.now());
-            passBook.setReceivedBy(issueRequest.getIssuedTo());
-            passBook.setIssuedBy(issueRequest.getIssuedBy());
-            passBook.setLastUpdatedBy(issueRequest.getIssuedBy());
-            passBookRepository.save(passBook);
-
-            parent = passBook.getBookParent();
-            bookType = "PASSBOOK";
-
-        } else {
-            throw new ResourceNotFoundException("Book", "serial number", issueRequest.getSerialNumber());
-        }
-
-        // Update parent's used count
-        parent.setUsed(parent.getUsed() + 1);
-        parent.setLastUpdatedBy(issueRequest.getIssuedBy());
-        bookParentRepository.save(parent);
-
-        log.info("Book {} issued successfully. Parent used count: {}",
-                issueRequest.getSerialNumber(), parent.getUsed());
-
-        return createBatchResponse(parent, bookType, 0);
+   @Override
+   @Transactional
+  public BatchResponseDTO issueBook(IssueRequestDTO issueRequest) {
+//        log.info("Issuing book with serial: {}", issueRequest.getSerialNumber());
+//
+//        // Find which type of book this is
+//        Optional<CheckBook> checkBookOpt = checkBookRepository.findBySerialNumber(issueRequest.getSerialNumber());
+//        Optional<Cpo> cpoOpt = cpoRepository.findBySerialNumber(issueRequest.getSerialNumber());
+//        Optional<PassBook> passBookOpt = passBookRepository.findBySerialNumber(issueRequest.getSerialNumber());
+//
+//        BookParent parent = null;
+//        String bookType = "";
+//
+//        if (checkBookOpt.isPresent()) {
+//            CheckBook checkBook = checkBookOpt.get();
+//            validateIssuance(checkBook, issueRequest);
+//
+//            // Check sequential issuance rule
+//            validateSequentialIssuance(checkBook, issueRequest.getBranchId());
+//
+//            // Update CheckBook
+//            checkBook.setIssuedDate(LocalDateTime.now());
+//            checkBook.setIssuedBy(issueRequest.getIssuedBy());
+//            checkBook.setLastUpdatedBy(issueRequest.getIssuedBy());
+//            checkBookRepository.save(checkBook);
+//
+//            parent = checkBook.getBookParent();
+//            bookType = "CHECKBOOK";
+//
+//        } else if (cpoOpt.isPresent()) {
+//            Cpo cpo = cpoOpt.get();
+//            validateIssuance(cpo, issueRequest);
+//
+//            // Check sequential issuance rule
+//            validateSequentialIssuance(cpo, issueRequest.getBranchId());
+//
+//            // Update CPO
+//            cpo.setIssuedDate(LocalDateTime.now());
+//            cpo.setReceivedBy(issueRequest.getIssuedTo());
+//            cpo.setIssuedBy(issueRequest.getIssuedBy());
+//            cpo.setLastUpdatedBy(issueRequest.getIssuedBy());
+//            cpoRepository.save(cpo);
+//
+//            parent = cpo.getBookParent();
+//            bookType = "CPO";
+//
+//        } else if (passBookOpt.isPresent()) {
+//            PassBook passBook = passBookOpt.get();
+//            validateIssuance(passBook, issueRequest);
+//
+//            // Check sequential issuance rule
+//            validateSequentialIssuance(passBook, issueRequest.getBranchId());
+//
+//            // Update PassBook
+//            passBook.setIssuedDate(LocalDateTime.now());
+//            passBook.setReceivedBy(issueRequest.getIssuedTo());
+//            passBook.setIssuedBy(issueRequest.getIssuedBy());
+//            passBook.setLastUpdatedBy(issueRequest.getIssuedBy());
+//            passBookRepository.save(passBook);
+//
+//            parent = passBook.getBookParent();
+//            bookType = "PASSBOOK";
+//
+//        } else {
+//            throw new ResourceNotFoundException("Book", "serial number", issueRequest.getSerialNumber());
+//        }
+//
+//        // Update parent's used count
+//        parent.setUsed(parent.getUsed() + 1);
+//        parent.setLastUpdatedBy(issueRequest.getIssuedBy());
+//        bookParentRepository.save(parent);
+//
+//        log.info("Book {} issued successfully. Parent used count: {}",
+//                issueRequest.getSerialNumber(), parent.getUsed());
+//
+//        return createBatchResponse(parent, bookType, 0);
+       return null;
     }
 
     @Override
@@ -306,53 +317,53 @@ public class BookParentServiceImpl implements BookParentService {
 
     // ============== SEQUENTIAL ISSUANCE VALIDATION ==============
 
-    private void validateSequentialIssuance(CheckBook checkBook, String branchId) {
-        BookParent parent = checkBook.getBookParent();
-        List<CheckBook> allBooks = checkBookRepository.findByBookParentOrderBySerialNumberAsc(parent);
-
-        // Find the current book's position
-        int currentIndex = -1;
-        for (int i = 0; i < allBooks.size(); i++) {
-            if (allBooks.get(i).getSerialNumber().equals(checkBook.getSerialNumber())) {
-                currentIndex = i;
-                break;
-            }
-        }
-
-        if (currentIndex > 0) {
-            // Check if previous book is issued
-            CheckBook previousBook = allBooks.get(currentIndex - 1);
-            if (previousBook.getIssuedDate() == null) {
-                throw new BusinessRuleException(
-                        String.format("Cannot issue serial %s. Previous serial %s must be issued first.",
-                                checkBook.getSerialNumber(), previousBook.getSerialNumber())
-                );
-            }
-        }
-    }
-
-    private void validateSequentialIssuance(Cpo cpo, String branchId) {
-        BookParent parent = cpo.getBookParent();
-        List<Cpo> allBooks = cpoRepository.findByBookParentOrderBySerialNumberAsc(parent);
-
-        int currentIndex = -1;
-        for (int i = 0; i < allBooks.size(); i++) {
-            if (allBooks.get(i).getSerialNumber().equals(cpo.getSerialNumber())) {
-                currentIndex = i;
-                break;
-            }
-        }
-
-        if (currentIndex > 0) {
-            Cpo previousBook = allBooks.get(currentIndex - 1);
-            if (previousBook.getIssuedDate() == null) {
-                throw new BusinessRuleException(
-                        String.format("Cannot issue serial %s. Previous serial %s must be issued first.",
-                                cpo.getSerialNumber(), previousBook.getSerialNumber())
-                );
-            }
-        }
-    }
+//    private void validateSequentialIssuance(CheckBook checkBook, String branchId) {
+//        BookParent parent = checkBook.getBookParent();
+//        List<CheckBook> allBooks = checkBookRepository.findByBookParentOrderBySerialNumberAsc(parent);
+//
+//        // Find the current book's position
+//        int currentIndex = -1;
+//        for (int i = 0; i < allBooks.size(); i++) {
+//            if (allBooks.get(i).getSerialNumber().equals(checkBook.getSerialNumber())) {
+//                currentIndex = i;
+//                break;
+//            }
+//        }
+//
+//        if (currentIndex > 0) {
+//            // Check if previous book is issued
+//            CheckBook previousBook = allBooks.get(currentIndex - 1);
+//            if (previousBook.getIssuedDate() == null) {
+//                throw new BusinessRuleException(
+//                        String.format("Cannot issue serial %s. Previous serial %s must be issued first.",
+//                                checkBook.getSerialNumber(), previousBook.getSerialNumber())
+//                );
+//            }
+//        }
+//    }
+//
+//    private void validateSequentialIssuance(Cpo cpo, String branchId) {
+//        BookParent parent = cpo.getBookParent();
+//        List<Cpo> allBooks = cpoRepository.findByBookParentOrderBySerialNumberAsc(parent);
+//
+//        int currentIndex = -1;
+//        for (int i = 0; i < allBooks.size(); i++) {
+//            if (allBooks.get(i).getSerialNumber().equals(cpo.getSerialNumber())) {
+//                currentIndex = i;
+//                break;
+//            }
+//        }
+//
+//        if (currentIndex > 0) {
+//            Cpo previousBook = allBooks.get(currentIndex - 1);
+//            if (previousBook.getIssuedDate() == null) {
+//                throw new BusinessRuleException(
+//                        String.format("Cannot issue serial %s. Previous serial %s must be issued first.",
+//                                cpo.getSerialNumber(), previousBook.getSerialNumber())
+//                );
+//            }
+//        }
+//    }
 
     private void validateSequentialIssuance(PassBook passBook, String branchId) {
         BookParent parent = passBook.getBookParent();
@@ -450,20 +461,20 @@ public class BookParentServiceImpl implements BookParentService {
         }
     }
 
-    private void validateIssuance(CheckBook checkBook, IssueRequestDTO request) {
-        if (checkBook.getIssuedDate() != null) {
-            throw new BusinessRuleException(
-                    String.format("CheckBook %s is already issued", checkBook.getSerialNumber())
-            );
-        }
-
-        if (!checkBook.getBranchId().equals(request.getBranchId())) {
-            throw new BusinessRuleException(
-                    String.format("CheckBook %s does not belong to branch %s",
-                            checkBook.getSerialNumber(), request.getBranchId())
-            );
-        }
-    }
+//    private void validateIssuance(CheckBook checkBook, IssueRequestDTO request) {
+//        if (checkBook.getIssuedDate() != null) {
+//            throw new BusinessRuleException(
+//                    String.format("CheckBook %s is already issued", checkBook.getSerialNumber())
+//            );
+//        }
+//
+//        if (!checkBook.getBranchId().equals(request.getBranchId())) {
+//            throw new BusinessRuleException(
+//                    String.format("CheckBook %s does not belong to branch %s",
+//                            checkBook.getSerialNumber(), request.getBranchId())
+//            );
+//        }
+//    }
 
     private void validateIssuance(Cpo cpo, IssueRequestDTO request) {
         if (cpo.getIssuedDate() != null) {
@@ -498,13 +509,13 @@ public class BookParentServiceImpl implements BookParentService {
     private void validateReturn(CheckBook checkBook) {
         if (checkBook.getIssuedDate() == null) {
             throw new BusinessRuleException(
-                    String.format("CheckBook %s is not issued", checkBook.getSerialNumber())
+                    String.format("CheckBook %s is not issued", checkBook.getStartSerialNumber())
             );
         }
 
         if (checkBook.getReturnedDate() != null) {
             throw new BusinessRuleException(
-                    String.format("CheckBook %s is already returned", checkBook.getSerialNumber())
+                    String.format("CheckBook %s is already returned", checkBook.getStartSerialNumber())
             );
         }
     }
@@ -593,68 +604,70 @@ public class BookParentServiceImpl implements BookParentService {
         return bookParentRepository.findBySerialInRange(serialNumber);
     }
 
-    @Override
+   @Override
     public boolean isSerialIssuable(String serialNumber, String branchId) {
-        // Check if serial exists and is not issued
-        Optional<CheckBook> checkBook = checkBookRepository.findBySerialNumber(serialNumber);
-        if (checkBook.isPresent()) {
-            if (checkBook.get().getIssuedDate() != null) return false;
-
-            // Check sequential rule
-            BookParent parent = checkBook.get().getBookParent();
-            List<CheckBook> allBooks = checkBookRepository.findByBookParentOrderBySerialNumberAsc(parent);
-
-            int currentIndex = -1;
-            for (int i = 0; i < allBooks.size(); i++) {
-                if (Objects.equals(allBooks.get(i).getSerialNumber(), serialNumber)) {
-                    currentIndex = i;
-                    break;
-                }
-            }
-
-            if (currentIndex > 0) {
-                CheckBook previousBook = allBooks.get(currentIndex - 1);
-                return previousBook.getIssuedDate() != null;
-            }
-
-            return currentIndex == 0; // First in sequence is always issuable
-        }
-
-        // Similar logic for CPO and PassBook...
-        return false;
+//        // Check if serial exists and is not issued
+//        Optional<CheckBook> checkBook = checkBookRepository.findBySerialNumber(serialNumber);
+//        if (checkBook.isPresent()) {
+//            if (checkBook.get().getIssuedDate() != null) return false;
+//
+//            // Check sequential rule
+//            BookParent parent = checkBook.get().getBookParent();
+//            List<CheckBook> allBooks = checkBookRepository.findByBookParentOrderBySerialNumberAsc(parent);
+//
+//            int currentIndex = -1;
+//            for (int i = 0; i < allBooks.size(); i++) {
+//                if (Objects.equals(allBooks.get(i).getSerialNumber(), serialNumber)) {
+//                    currentIndex = i;
+//                    break;
+//                }
+//            }
+//
+//            if (currentIndex > 0) {
+//                CheckBook previousBook = allBooks.get(currentIndex - 1);
+//                return previousBook.getIssuedDate() != null;
+//            }
+//
+//            return currentIndex == 0; // First in sequence is always issuable
+//        }
+//
+//        // Similar logic for CPO and PassBook...
+//        return false;
+       return false;
     }
 
     @Override
     public String getNextIssuableSerial(String branchId, String bookType) {
-        List<BookParent> parents = bookParentRepository.findByBranchId(branchId);
-
-        for (BookParent parent : parents) {
-            switch (bookType.toUpperCase()) {
-                case "CHECKBOOK":
-                    List<CheckBook> checkBooks = checkBookRepository
-                            .findByBookParentOrderBySerialNumberAsc(parent);
-                    for (CheckBook book : checkBooks) {
-                        if (book.getIssuedDate() == null) {
-                            // Check sequential rule
-                            int index = checkBooks.indexOf(book);
-                            if (index == 0 || checkBooks.get(index - 1).getIssuedDate() != null) {
-                                return book.getSerialNumber();
-                            }
-                        }
-                    }
-                    break;
-
-                case "CPO":
-                    // Similar logic for CPO
-                    break;
-
-                case "PASSBOOK":
-                    // Similar logic for PassBook
-                    break;
-            }
-        }
-
-        return null; // No issuable serial found
+//        List<BookParent> parents = bookParentRepository.findByBranchId(branchId);
+//
+//        for (BookParent parent : parents) {
+//            switch (bookType.toUpperCase()) {
+//                case "CHECKBOOK":
+//                    List<CheckBook> checkBooks = checkBookRepository
+//                            .findByBookParentOrderBySerialNumberAsc(parent);
+//                    for (CheckBook book : checkBooks) {
+//                        if (book.getIssuedDate() == null) {
+//                            // Check sequential rule
+//                            int index = checkBooks.indexOf(book);
+//                            if (index == 0 || checkBooks.get(index - 1).getIssuedDate() != null) {
+//                                return book.getSerialNumber();
+//                            }
+//                        }
+//                    }
+//                    break;
+//
+//                case "CPO":
+//                    // Similar logic for CPO
+//                    break;
+//
+//                case "PASSBOOK":
+//                    // Similar logic for PassBook
+//                    break;
+//            }
+//        }
+//
+//        return null; // No issuable serial found
+       return null;
     }
 
     @Override
@@ -676,5 +689,61 @@ public class BookParentServiceImpl implements BookParentService {
         BookParent parent = bookParentRepository.findById(parentId)
                 .orElseThrow(() -> new ResourceNotFoundException("BookParent", "id", parentId));
         return parent.getUsed() == parent.getNumOfPad();
+    }
+
+    private List<CheckBook> generateCheckBooksFromRange(String startPageSerial, String endPageSerial,
+                                                        int leavesPerCheckBook, BookParent parent,
+                                                        BatchRegistrationDTO registrationDTO) {
+        List<CheckBook> checkBooks = new ArrayList<>();
+
+        int startNum = extractNumber(startPageSerial);
+        int endNum = extractNumber(endPageSerial);
+        String prefix = getPrefix(startPageSerial);
+
+        int numberOfCheckBooks = (endNum - startNum + 1) / leavesPerCheckBook;
+
+        for (int i = 0; i < numberOfCheckBooks; i++) {
+            int checkbookStartPage = startNum + (i * leavesPerCheckBook);
+            int checkbookEndPage = checkbookStartPage + leavesPerCheckBook - 1;
+
+            String checkbookStartSerial = prefix + checkbookStartPage;
+            String checkbookEndSerial = prefix + checkbookEndPage;
+
+            CheckBook checkBook = new CheckBook();
+            checkBook.setStartSerialNumber(checkbookStartSerial);  // Updated field name
+            checkBook.setEndSerialNumber(checkbookEndSerial);      // Updated field name
+            checkBook.setBookParent(parent);
+            checkBook.setCheckBookType(registrationDTO.getCheckBookType());
+            checkBook.setCheckBookLeaveType(registrationDTO.getCheckBookLeaveType());
+            checkBook.setReceivedDate(LocalDateTime.now());
+            checkBook.setCreatedBy(registrationDTO.getCreatedBy());
+            checkBook.setLastUpdatedBy(registrationDTO.getCreatedBy());
+            checkBook.setBranchId(registrationDTO.getBranchId());
+            checkBook.setSubProcessId(registrationDTO.getSubProcessId());
+            checkBook.setProcessId(registrationDTO.getProcessId());
+
+            checkBooks.add(checkBook);
+        }
+
+        return checkBooks;
+    }
+
+    /**
+     * Extract numeric part from serial number
+     */
+    private int extractNumber(String serial) {
+        try {
+            String numericPart = serial.replaceAll("[^0-9]", "");
+            return Integer.parseInt(numericPart);
+        } catch (NumberFormatException e) {
+            throw new BusinessRuleException("Invalid serial number format: " + serial);
+        }
+    }
+
+    /**
+     * Get prefix from serial number (e.g., "CB" from "CB1001")
+     */
+    private String getPrefix(String serial) {
+        return serial.replaceAll("\\d+", "");
     }
 }

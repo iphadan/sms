@@ -35,7 +35,7 @@ public class BookParent {
     @Column( nullable = false)
     private ParentBookType parentBookType;
     // available = numOfPad - used
-
+private boolean finished;
     @NotBlank
     @Column(name = "BRANCH_ID")
     private String branchId;

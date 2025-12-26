@@ -16,6 +16,23 @@ import java.util.Optional;
 
 @Repository
 public interface CheckBookRepository extends JpaRepository<CheckBook, Long> {
+    @Query("SELECT CASE WHEN COUNT(cb) > 0 THEN TRUE ELSE FALSE END " +
+            "FROM CheckBook cb WHERE cb.startSerialNumber = :startSerial " +
+            "AND cb.endSerialNumber = :endSerial")
+    boolean existsByStartSerialNumberAndEndSerialNumber(
+            @Param("startSerial") String startSerial,
+            @Param("endSerial") String endSerial);
+
+    // Find checkbook by serial range
+    Optional<CheckBook> findByStartSerialNumberAndEndSerialNumber(
+            String startSerialNumber, String endSerialNumber);
+
+    // Find checkbooks within a serial range
+    @Query("SELECT cb FROM CheckBook cb WHERE " +
+            "cb.startSerialNumber >= :startSerial AND cb.endSerialNumber <= :endSerial")
+    List<CheckBook> findBySerialRange(
+            @Param("startSerial") String startSerial,
+            @Param("endSerial") String endSerial);
 
     // Basic CRUD
     Optional<CheckBook> findById(Long id);
