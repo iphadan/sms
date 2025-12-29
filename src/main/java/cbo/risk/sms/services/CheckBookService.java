@@ -1,8 +1,9 @@
 package cbo.risk.sms.services;
 
-import cbo.risk.sms.dtos.CheckBookCreateDTO;
-import cbo.risk.sms.dtos.CheckBookDTO;
-import cbo.risk.sms.dtos.CheckBookUpdateDTO;
+import cbo.risk.sms.dtos.*;
+import cbo.risk.sms.enums.CheckBookLeaveType;
+import cbo.risk.sms.enums.CheckBookType;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -11,6 +12,15 @@ import java.util.Optional;
 
 public interface CheckBookService {
 
+    // Two-step issuance process
+    ResponseDTO<RequestCheckBookDTO> issueAvailableCheckBook(RequestCheckBookDTO request);
+    ResponseDTO<RequestCheckBookDTO> receiveCheckBook(RequestCheckBookDTO request);
+
+    // Helper methods
+    Optional<CheckBookDTO> findNextAvailableCheckBook(String branchId, CheckBookType type,
+                                                      CheckBookLeaveType leaveType);
+    List<CheckBookDTO> findAvailableCheckBooks(String branchId, CheckBookType type,
+                                               CheckBookLeaveType leaveType);
     // CRUD Operations
     CheckBookDTO create(CheckBookCreateDTO createDTO);
     Optional<CheckBookDTO> findById(Long id);
@@ -43,4 +53,5 @@ public interface CheckBookService {
 
     // Batch operations
     List<CheckBookDTO> createBatch(List<CheckBookCreateDTO> createDTOs);
+
 }

@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.validation.constraints.NotBlank;
+
 @Data
 public class BatchResponseDTO {
     private Long parentId;
@@ -12,10 +14,20 @@ public class BatchResponseDTO {
     private String endSerial;
     private int numOfPad;
     private int used;
+    private boolean finished;
     private int available;
     private String message;
     private int childrenCreated;
     private String parentBookType;
 
+    private String branchId;
+
+
+    private String subProcessId;
+
+
+    private String processId;
+
+    private String createdBy;
 
 }

@@ -1,9 +1,9 @@
 package cbo.risk.sms.controllers;
 
-import cbo.risk.sms.dtos.CheckBookCreateDTO;
-import cbo.risk.sms.dtos.CheckBookDTO;
-import cbo.risk.sms.dtos.CheckBookUpdateDTO;
+import cbo.risk.sms.dtos.*;
+import cbo.risk.sms.models.RequestCheckBook;
 import cbo.risk.sms.services.CheckBookService;
+import cbo.risk.sms.services.impl.CheckBookServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -14,16 +14,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Path;
 import javax.validation.Valid;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/checkbooks")
-@RequiredArgsConstructor
 @Tag(name = "CheckBook Management", description = "APIs for managing individual CheckBooks")
 public class CheckBookController {
-@Audited
-    private  CheckBookService checkBookService;
+    private final CheckBookServiceImpl checkBookService;
+
+    public CheckBookController(CheckBookServiceImpl checkBookService) {
+        this.checkBookService = checkBookService;
+    }
 
     @PostMapping
     @Operation(summary = "Create a new CheckBook")
@@ -79,10 +82,12 @@ public class CheckBookController {
 
     @GetMapping("/branch/{branchId}/issued")
     @Operation(summary = "Get issued CheckBooks by branch")
-    public ResponseEntity<List<CheckBookDTO>> getIssuedCheckBooksByBranch(@PathVariable String branchId) {
-        List<CheckBookDTO> checkBooks = checkBookService.findIssuedByBranch(branchId);
+    public ResponseEntity<List<RequestCheckBookDTO>> getIssuedCheckBooksByBranch(@PathVariable String branchId) {
+        List<RequestCheckBookDTO> checkBooks = checkBookService.findIssuedRequestCheckBookByBranch(branchId);
         return ResponseEntity.ok(checkBooks);
     }
+
+
 
     @GetMapping("/parent/{parentId}")
     @Operation(summary = "Get CheckBooks by parent batch")
@@ -109,6 +114,16 @@ public class CheckBookController {
         return ResponseEntity.ok(issued);
     }
 
+    @PostMapping("/issue")
+    @Operation(summary = "Issue a CheckBook")
+    public ResponseEntity<ResponseDTO<RequestCheckBookDTO>> issueCheckBook(
+            @RequestBody RequestCheckBookDTO requestCheckBookDTO) {
+        ResponseDTO<RequestCheckBookDTO> issued = checkBookService.issueAvailableCheckBook(requestCheckBookDTO);
+        return ResponseEntity.ok(issued);
+    }
+
+
+
     @PostMapping("/{id}/return")
     @Operation(summary = "Return a CheckBook")
     public ResponseEntity<CheckBookDTO> returnCheckBook(
@@ -120,10 +135,11 @@ public class CheckBookController {
 
     @PostMapping("/{id}/receive")
     @Operation(summary = "Receive a CheckBook")
-    public ResponseEntity<CheckBookDTO> receiveCheckBook(
-            @PathVariable Long id,
-            @RequestParam String receivedBy) {
-        CheckBookDTO received = checkBookService.receiveItem(id, receivedBy);
+    public ResponseEntity<RequestCheckBookDTO> receiveCheckBook(
+            @RequestBody RequestCheckBookDTO requestCheckBookDTO,
+    @PathVariable("id") Long id) {
+        System.out.println(requestCheckBookDTO);
+        RequestCheckBookDTO received = checkBookService.receiveItem(requestCheckBookDTO);
         return ResponseEntity.ok(received);
     }
 

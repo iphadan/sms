@@ -18,6 +18,7 @@ import java.util.Optional;
 public interface PassBookRepository extends JpaRepository<PassBook, Long> {
 
     // Basic CRUD
+    List<PassBook> findByBranchIdOrderBySerialNumberAsc(String branchId);
     Optional<PassBook> findById(Long id);
 
     // Find by serial number

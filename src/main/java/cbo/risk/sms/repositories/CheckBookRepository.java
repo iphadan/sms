@@ -16,6 +16,9 @@ import java.util.Optional;
 
 @Repository
 public interface CheckBookRepository extends JpaRepository<CheckBook, Long> {
+    List<CheckBook> findByBookParentIdOrderByStartSerialNumberAsc(Long bookParentId);
+    List<CheckBook> findByBookParentIdAndCheckBookTypeAndIssuedDateIsNull(
+            Long bookParentId, CheckBookType type);
     @Query("SELECT CASE WHEN COUNT(cb) > 0 THEN TRUE ELSE FALSE END " +
             "FROM CheckBook cb WHERE cb.startSerialNumber = :startSerial " +
             "AND cb.endSerialNumber = :endSerial")
@@ -38,8 +41,12 @@ public interface CheckBookRepository extends JpaRepository<CheckBook, Long> {
     Optional<CheckBook> findById(Long id);
 
     // Find by serial number
-    Optional<CheckBook> findBySerialNumber(String serialNumber);
-    boolean existsBySerialNumber(String serialNumber);
+    Optional<CheckBook> findByStartSerialNumber(String serialNumber);
+    Optional<CheckBook> findByEndSerialNumber(String serialNumber);
+
+    boolean existsByStartSerialNumber(String serialNumber);
+    boolean existsByEndSerialNumber(String serialNumber);
+
 
     // Find by branch
     List<CheckBook> findByBranchId(String branchId);
@@ -49,8 +56,8 @@ public interface CheckBookRepository extends JpaRepository<CheckBook, Long> {
     List<CheckBook> findByBookParentId(Long bookParentId);
 
     // Find by parent with ordering for sequential issuance
-    @Query("SELECT cb FROM CheckBook cb WHERE cb.bookParent = :bookParent ORDER BY cb.serialNumber ASC")
-    List<CheckBook> findByBookParentOrderBySerialNumberAsc(@Param("bookParent") BookParent bookParent);
+    @Query("SELECT cb FROM CheckBook cb WHERE cb.bookParent = :bookParent ORDER BY cb.id ASC")
+    List<CheckBook> findByBookParentOrderByStartSerialNumberAsc(@Param("bookParent") BookParent bookParent);
 
     // Status-based queries
     List<CheckBook> findByBranchIdAndIssuedDateIsNull(String branchId);

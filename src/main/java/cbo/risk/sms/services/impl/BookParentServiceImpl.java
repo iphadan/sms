@@ -1,10 +1,7 @@
 package cbo.risk.sms.services.impl;
 
 import cbo.risk.sms.dtos.*;
-import cbo.risk.sms.enums.CheckBookType;
-import cbo.risk.sms.enums.ParentBookType;
-import cbo.risk.sms.enums.PassBookCategory;
-import cbo.risk.sms.enums.PassBookType;
+import cbo.risk.sms.enums.*;
 import cbo.risk.sms.exceptions.ResourceNotFoundException;
 import cbo.risk.sms.exceptions.BusinessRuleException;
 import cbo.risk.sms.models.*;
@@ -68,10 +65,14 @@ public class BookParentServiceImpl implements BookParentService {
         int numberOfCheckBooks = totalPages / leavesPerCheckBook;
 
         // 3. Create Parent with the new fields
-        BookParent parent = createParent(registrationDTO);
+        BookParent parent = createCheckBookParent(registrationDTO);
         parent.setParentBookType(ParentBookType.valueOf(registrationDTO.getParentBookType().name()));
         parent.setBatchReceivedDate(LocalDateTime.now());
-
+        parent.setCheckLeaveType(registrationDTO.getCheckBookLeaveType());
+        parent.setParentBookType(ParentBookType.CHECK_BOOK);
+        parent.setPassCheckType(registrationDTO.getCheckBookType().name());
+        System.out.println(registrationDTO.getNumOfPad());
+        System.out.println(parent.getNumOfPad());
         BookParent savedParent = bookParentRepository.save(parent);
 
         // 4. Generate individual checkbooks with their own start/end serial ranges
@@ -141,6 +142,8 @@ public class BookParentServiceImpl implements BookParentService {
         BookParent parent = createParent(registrationDTO);
         parent.setBatchReceivedDate(LocalDateTime.now());
         parent.setParentBookType(ParentBookType.valueOf(registrationDTO.getParentBookType().name()));
+        parent.setPassCheckType(registrationDTO.getPassBookType().name());
+        parent.setPassBookType(registrationDTO.getPassBookCategory().name());
         BookParent savedParent = bookParentRepository.save(parent);
 
         // 2. Generate serial numbers and create PassBook children
@@ -256,7 +259,7 @@ public class BookParentServiceImpl implements BookParentService {
         log.info("Returning book with serial: {}", returnRequest.getSerialNumber());
 
         // Find which type of book this is
-        Optional<CheckBook> checkBookOpt = checkBookRepository.findBySerialNumber(returnRequest.getSerialNumber());
+        Optional<CheckBook> checkBookOpt = checkBookRepository.findByStartSerialNumber(returnRequest.getSerialNumber());
         Optional<Cpo> cpoOpt = cpoRepository.findBySerialNumber(returnRequest.getSerialNumber());
         Optional<PassBook> passBookOpt = passBookRepository.findBySerialNumber(returnRequest.getSerialNumber());
 
@@ -411,6 +414,38 @@ public class BookParentServiceImpl implements BookParentService {
 
         return parent;
     }
+    private BookParent createCheckBookParent(BatchRegistrationDTO registrationDTO) {
+        BookParent parent = new BookParent();
+        parent.setStartingSerial(registrationDTO.getStartSerial());
+        parent.setEndingSerial(registrationDTO.getEndSerial());
+
+        // Calculate number of checkbooks based on leaves
+        int leavesPerCheckBook = registrationDTO.getCheckBookLeaveType().getNumberOfLeaves();
+        int startNum = extractNumber(registrationDTO.getStartSerial());
+        int endNum = extractNumber(registrationDTO.getEndSerial());
+        int totalPages = endNum - startNum + 1;
+
+        if (totalPages % leavesPerCheckBook != 0) {
+            throw new BusinessRuleException(
+                    String.format("Total pages %d is not divisible by %d leaves per checkbook",
+                            totalPages, leavesPerCheckBook));
+        }
+
+        int numberOfCheckBooks = totalPages / leavesPerCheckBook;
+
+        parent.setNumOfPad(numberOfCheckBooks); // Number of checkbooks
+        parent.setUsed(0);
+
+        parent.setNumOfPad(numberOfCheckBooks);
+
+        parent.setBranchId(registrationDTO.getBranchId());
+        parent.setSubProcessId(registrationDTO.getSubProcessId());
+        parent.setProcessId(registrationDTO.getProcessId());
+        parent.setCreatedBy(registrationDTO.getCreatedBy());
+        parent.setLastUpdatedBy(registrationDTO.getCreatedBy());
+
+        return parent;
+    }
 
     private List<String> generateSerials(String start, String end) {
         List<String> serials = new ArrayList<>();
@@ -451,7 +486,7 @@ public class BookParentServiceImpl implements BookParentService {
         // Check if any serial in range already exists
         List<String> serials = generateSerials(dto.getStartSerial(), dto.getEndSerial());
         for (String serial : serials) {
-            if (checkBookRepository.existsBySerialNumber(serial) ||
+            if (checkBookRepository.existsByStartSerialNumber(serial) ||
                     cpoRepository.existsBySerialNumber(serial) ||
                     passBookRepository.existsBySerialNumber(serial)) {
                 throw new BusinessRuleException(
@@ -715,7 +750,7 @@ public class BookParentServiceImpl implements BookParentService {
             checkBook.setBookParent(parent);
             checkBook.setCheckBookType(registrationDTO.getCheckBookType());
             checkBook.setCheckBookLeaveType(registrationDTO.getCheckBookLeaveType());
-            checkBook.setReceivedDate(LocalDateTime.now());
+//            checkBook.setReceivedDate(LocalDateTime.now());
             checkBook.setCreatedBy(registrationDTO.getCreatedBy());
             checkBook.setLastUpdatedBy(registrationDTO.getCreatedBy());
             checkBook.setBranchId(registrationDTO.getBranchId());

@@ -7,8 +7,6 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Data
-@Getter
-@Setter
 public class BaseRequestDTO {
     private Long id;
     private String serialNum;
@@ -19,4 +17,9 @@ public class BaseRequestDTO {
     private String lastUpdatedBy;
     private LocalDateTime createdTimestamp;
     private LocalDateTime modifiedTimestamp;
+    private LocalDateTime receivedDate;
+    private LocalDateTime issuedDate;
+    private LocalDateTime returnedDate;
+
+
 }

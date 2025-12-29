@@ -1,10 +1,9 @@
 package cbo.risk.sms.controllers;
 
-import cbo.risk.sms.dtos.PassBookCreateDTO;
-import cbo.risk.sms.dtos.PassBookDTO;
-import cbo.risk.sms.dtos.PassBookUpdateDTO;
+import cbo.risk.sms.dtos.*;
 import cbo.risk.sms.enums.PassBookCategory;
 import cbo.risk.sms.enums.PassBookType;
+import cbo.risk.sms.models.RequestPassBook;
 import cbo.risk.sms.services.PassBookService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -120,15 +119,31 @@ public class PassBookController {
         PassBookDTO returned = passBookService.returnItem(id, returnedBy);
         return ResponseEntity.ok(returned);
     }
-
+    @PostMapping("/issue")
+    @Operation(summary = "Issue a Pass Book")
+    public ResponseEntity<ResponseDTO<RequestPassBookDTO>> issueCheckBook(
+            @RequestBody RequestPassBookDTO requestPassBookDTO) {
+        System.out.println(requestPassBookDTO);
+        ResponseDTO<RequestPassBookDTO> issued = passBookService.issueAvailablePassBook(requestPassBookDTO);
+        return ResponseEntity.ok(issued);
+    }
     @PostMapping("/{id}/receive")
-    @Operation(summary = "Receive a PassBook")
-    public ResponseEntity<PassBookDTO> receivePassBook(
-            @PathVariable Long id,
-            @RequestParam String receivedBy) {
-        PassBookDTO received = passBookService.receiveItem(id, receivedBy);
+    @Operation(summary = "Receive a Pass book")
+    public ResponseEntity<RequestPassBookDTO> receivePassBook(
+            @RequestBody RequestPassBookDTO requestPassBookDTO,
+            @PathVariable("id") Long id) {
+        System.out.println(requestPassBookDTO);
+        RequestPassBookDTO received = passBookService.receiveItem(requestPassBookDTO);
         return ResponseEntity.ok(received);
     }
+//    @PostMapping("/{id}/receive")
+//    @Operation(summary = "Receive a PassBook")
+//    public ResponseEntity<PassBookDTO> receivePassBook(
+//            @PathVariable Long id,
+//            @RequestParam String receivedBy) {
+//        PassBookDTO received = passBookService.receiveItem(id, receivedBy);
+//        return ResponseEntity.ok(received);
+//    }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a PassBook")

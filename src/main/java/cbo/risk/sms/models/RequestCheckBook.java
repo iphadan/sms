@@ -1,5 +1,6 @@
 package cbo.risk.sms.models;
 
+import cbo.risk.sms.enums.CheckBookType;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -18,14 +19,21 @@ public class RequestCheckBook {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String serialNum;
+
+    private String startSerialNumber;
+private Long checkBookId;
+    private String endSerialNumber;
+    private CheckBookType checkBookType;
+    private int checkBookLeaveType;
     private LocalDateTime receivedDate;
     private LocalDateTime issuedDate;
     private LocalDateTime returnedDate;
     @NotBlank
     @Column(name = "BRANCH_ID")
     private String branchId;
-
+    @NotBlank
+    @Column(name ="ACCOUNT_NUMBER")
+private String accountNumber;
 
     @NotBlank
     @Column(name = "SUBPROCESS_ID")

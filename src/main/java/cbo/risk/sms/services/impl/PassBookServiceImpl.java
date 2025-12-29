@@ -1,16 +1,18 @@
 package cbo.risk.sms.services.impl;
 
-import cbo.risk.sms.dtos.PassBookCreateDTO;
-import cbo.risk.sms.dtos.PassBookDTO;
-import cbo.risk.sms.dtos.PassBookUpdateDTO;
+import cbo.risk.sms.dtos.*;
+import cbo.risk.sms.enums.CheckBookLeaveType;
+import cbo.risk.sms.enums.ParentBookType;
 import cbo.risk.sms.enums.PassBookCategory;
 import cbo.risk.sms.enums.PassBookType;
 import cbo.risk.sms.exceptions.ResourceNotFoundException;
 import cbo.risk.sms.exceptions.BusinessRuleException;
 import cbo.risk.sms.models.BookParent;
 import cbo.risk.sms.models.PassBook;
+import cbo.risk.sms.models.RequestPassBook;
 import cbo.risk.sms.repositories.BookParentRepository;
 import cbo.risk.sms.repositories.PassBookRepository;
+import cbo.risk.sms.repositories.RequestPassBookRepository;
 import cbo.risk.sms.services.PassBookService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -22,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -35,6 +38,122 @@ public class PassBookServiceImpl implements PassBookService {
     private final PassBookRepository passBookRepository;
     private final BookParentRepository bookParentRepository;
     private final ModelMapper modelMapper;
+    private final RequestPassBookRepository requestPassBookRepository;
+
+    @Transactional
+    public ResponseDTO<RequestPassBookDTO> issueAvailablePassBook(RequestPassBookDTO request) {
+
+        log.info("Issuing PassBook for branch: {}, account: {}, issued by: {}",
+                request.getBranchId(),
+                request.getAccountNumber(),
+                request.getCreatedBy());
+
+        // 1. Find next available passbook
+        PassBook availablePassBook = findAndReserveNextAvailablePassBook(request);
+        System.out.println(1);
+        // 2. Create request record
+        RequestPassBook requestPassBook = new RequestPassBook();
+        requestPassBook.setPassBookId(availablePassBook.getId());
+        requestPassBook.setSerialNum(availablePassBook.getSerialNumber());
+        requestPassBook.setBranchId(request.getBranchId());
+        requestPassBook.setAccountNumber(request.getAccountNumber());
+        requestPassBook.setProcessId(request.getProcessId());
+        requestPassBook.setSubProcessId(request.getSubProcessId());
+        requestPassBook.setCreatedBy(request.getCreatedBy());
+        requestPassBook.setLastUpdatedBy(request.getCreatedBy());
+        requestPassBook.setIssuedDate(LocalDateTime.now());
+        System.out.println(2);
+        RequestPassBook savedRequest =
+                requestPassBookRepository.save(requestPassBook);
+        System.out.println(3);
+        // 3. Update passbook status
+        availablePassBook.setIssuedDate(LocalDateTime.now());
+        availablePassBook.setIssuedBy(request.getCreatedBy());
+        availablePassBook.setLastUpdatedBy(request.getCreatedBy());
+        System.out.println(4);
+        passBookRepository.save(availablePassBook);
+        System.out.println(5);
+        log.info("PassBook issued - Request ID: {}, PassBook ID: {}, Serial: {}",
+                savedRequest.getId(),
+                availablePassBook.getId(),
+                availablePassBook.getSerialNumber());
+
+        return createIssueResponse(savedRequest, availablePassBook);
+    }
+    private ResponseDTO<RequestPassBookDTO> createIssueResponse(
+            RequestPassBook requestPassBook,
+            PassBook passBook) {
+
+        RequestPassBookDTO dto = new RequestPassBookDTO();
+
+        dto.setId(requestPassBook.getId());
+        dto.setPassBookId(passBook.getId());
+        dto.setSerialNum(requestPassBook.getSerialNum());
+        dto.setBranchId(requestPassBook.getBranchId());
+        dto.setAccountNumber(requestPassBook.getAccountNumber());
+        dto.setProcessId(requestPassBook.getProcessId());
+        dto.setSubProcessId(requestPassBook.getSubProcessId());
+        dto.setCreatedBy(requestPassBook.getCreatedBy());
+        dto.setLastUpdatedBy(requestPassBook.getLastUpdatedBy());
+        dto.setIssuedDate(requestPassBook.getIssuedDate());
+        dto.setCreatedTimestamp(requestPassBook.getCreatedTimestamp());
+        dto.setModifiedTimestamp(requestPassBook.getModifiedTimestamp());
+ResponseDTO<RequestPassBookDTO> responseDTO = new ResponseDTO<>();
+responseDTO.setResult(dto);
+responseDTO.setStatus(true);
+responseDTO.setMessage("PassBook issued successfully");
+        return responseDTO;
+    }
+
+    private PassBook findAndReserveNextAvailablePassBook(RequestPassBookDTO request) {
+
+        Optional<BookParent>  availableParent = bookParentRepository.findAvailablePassBookParent(
+                request.getBranchId(), request.getPassBookType().name(), ParentBookType.PASS_BOOK);
+        if(availableParent.isPresent()) {
+
+        List<PassBook> passBooks = passBookRepository
+                .findByBranchIdOrderBySerialNumberAsc(request.getBranchId());
+
+
+
+        passBooks.sort(Comparator.comparingInt(this::extractPassBookNumber));
+
+        for (PassBook passBook : passBooks) {
+
+            // Available = not yet issued
+            if (passBook.getIssuedDate() == null) {
+
+                // Sequential rule
+                if (isSequentiallyIssuable(passBook, passBooks)) {
+                    return passBook;
+                }
+            }
+        }
+        }
+
+        throw new BusinessRuleException(
+                String.format("No available PassBooks found for branch %s",
+                        request.getBranchId()));
+    }
+    private int extractPassBookNumber(PassBook passBook) {
+        // Examples: pas1, pas10, pas003
+        String serial = passBook.getSerialNumber();
+        return Integer.parseInt(serial.replaceAll("\\D+", ""));
+    }
+
+    private boolean isSequentiallyIssuable(PassBook passBook, List<PassBook> allPassBooks) {
+
+        int currentIndex = allPassBooks.indexOf(passBook);
+
+        // First passbook can always be issued
+        if (currentIndex == 0) {
+            return true;
+        }
+
+        PassBook previousPassBook = allPassBooks.get(currentIndex - 1);
+
+        return previousPassBook.getIssuedDate() != null;
+    }
 
     @Override
     @Transactional
@@ -370,6 +489,33 @@ public class PassBookServiceImpl implements PassBookService {
 
         return convertToDTO(received);
     }
+    @Override
+    @Transactional
+    public RequestPassBookDTO receiveItem(RequestPassBookDTO request) {
+        log.info("Receiving PassBook with ID: {} by user: {}", request.getId(), request.getLastUpdatedBy());
+
+        PassBook passBook = passBookRepository.findById(request.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("PassBook", "id", request.getId()));
+
+        // Validate if not received
+        if (passBook.getReceivedDate() != null) {
+            throw new BusinessRuleException("PassBook is already received");
+        }
+
+        passBook.setReceivedDate(LocalDateTime.now());
+        passBook.setLastUpdatedBy(request.getLastUpdatedBy());
+BookParent bookParent = bookParentRepository.findById(passBook.getId()).orElse(null);
+if(bookParent == null){
+    return null;
+}
+bookParent.setUsed(bookParent.getUsed() + 1);
+//bookParent.setLastIssuedChild(passBook.getId());
+        bookParentRepository.save(bookParent);
+        PassBook received = passBookRepository.save(passBook);
+        log.info("PassBook received: {}", received.getId());
+
+        return convertToRequestPassBookDTO(received);
+    }
 
     @Override
     public List<PassBookDTO> findAvailableByBranch(String branchId) {
@@ -536,6 +682,21 @@ public class PassBookServiceImpl implements PassBookService {
             dto.setParentNumOfPad(passBook.getBookParent().getNumOfPad());
             dto.setParentUsed(passBook.getBookParent().getUsed());
             dto.setParentAvailable(passBook.getBookParent().getNumOfPad() - passBook.getBookParent().getUsed());
+        }
+
+        return dto;
+    }
+
+    private RequestPassBookDTO convertToRequestPassBookDTO(PassBook passBook) {
+        RequestPassBookDTO dto = modelMapper.map(passBook, RequestPassBookDTO.class);
+
+        // Map BookParent ID if exists
+        if (passBook.getBookParent() != null) {
+            dto.setPassBookId(passBook.getId());
+            // Also include parent stats
+            dto.setLastUpdatedBy(passBook.getLastUpdatedBy());
+//            dto.setParentUsed(passBook.getBookParent().getUsed());
+//            dto.setParentAvailable(passBook.getBookParent().getNumOfPad() - passBook.getBookParent().getUsed());
         }
 
         return dto;

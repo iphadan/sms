@@ -1,5 +1,7 @@
 package cbo.risk.sms.models;
 
+import cbo.risk.sms.enums.CheckBookLeaveType;
+import cbo.risk.sms.enums.CheckBookType;
 import cbo.risk.sms.enums.ParentBookType;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -27,6 +29,7 @@ public class BookParent {
     private String endingSerial;    // Last serial in the batch range
 
 @Column(nullable = false)
+
     private int numOfPad;           // Total number of pads in this batch
 
     private int used = 0;// Number of pads that have been issued (not returned)
@@ -35,11 +38,15 @@ public class BookParent {
     @Column( nullable = false)
     private ParentBookType parentBookType;
     // available = numOfPad - used
-private boolean finished;
+    @Column(name = "finished")
+private boolean finished = false;
     @NotBlank
     @Column(name = "BRANCH_ID")
     private String branchId;
-
+private Long lastIssuedChild;
+private CheckBookLeaveType checkLeaveType;
+private String passCheckType;
+private String passBookType;
     @NotBlank
     @Column(name = "SUBPROCESS_ID")
     private String subProcessId;

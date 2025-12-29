@@ -18,7 +18,7 @@ public class RequestCpo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+private Long cpoId;
     private String serialNum;
     private LocalDateTime receivedDate;
     private LocalDateTime issuedDate;
@@ -27,6 +27,8 @@ public class RequestCpo {
     @Column(name = "BRANCH_ID")
     private String branchId;
 
+    @Column(name ="ACCOUNT_NUMBER")
+    private String accountNumber;
 
     @NotBlank
     @Column(name = "SUBPROCESS_ID")

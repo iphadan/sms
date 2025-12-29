@@ -1,5 +1,7 @@
 package cbo.risk.sms.models;
 
+import cbo.risk.sms.enums.PassBookCategory;
+import cbo.risk.sms.enums.PassBookType;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -17,15 +19,19 @@ public class RequestPassBook {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    private Long passBookId;
     private String serialNum;
     private LocalDateTime receivedDate;
     private LocalDateTime issuedDate;
     private LocalDateTime returnedDate;
+    private PassBookType passBookType;
+    private PassBookCategory passBookCategory;
     @NotBlank
     @Column(name = "BRANCH_ID")
     private String branchId;
-
+    @NotBlank
+    @Column(name ="ACCOUNT_NUMBER")
+    private String accountNumber;
 
     @NotBlank
     @Column(name = "SUBPROCESS_ID")

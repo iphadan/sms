@@ -22,7 +22,9 @@ public class CheckBookDTO extends BaseStockDTO {
 
     @NotNull(message = "CheckBook leave type is required")
     private CheckBookLeaveType checkBookLeaveType;
-    private String serialNumber;
+    private String startSerialNumber;
+    private String endSerialNumber;
+
     private Long bookParentId;
     private String issuedTo;
     private String issuedBy;

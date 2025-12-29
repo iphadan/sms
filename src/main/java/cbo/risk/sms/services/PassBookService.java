@@ -1,8 +1,6 @@
 package cbo.risk.sms.services;
 
-import cbo.risk.sms.dtos.PassBookCreateDTO;
-import cbo.risk.sms.dtos.PassBookDTO;
-import cbo.risk.sms.dtos.PassBookUpdateDTO;
+import cbo.risk.sms.dtos.*;
 import cbo.risk.sms.enums.PassBookCategory;
 import cbo.risk.sms.enums.PassBookType;
 import org.springframework.data.domain.Page;
@@ -12,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PassBookService {
+    ResponseDTO<RequestPassBookDTO> issueAvailablePassBook(RequestPassBookDTO request);
 
     // CRUD Operations
     PassBookDTO create(PassBookCreateDTO createDTO);
@@ -30,6 +29,8 @@ public interface PassBookService {
     PassBookDTO issueItem(Long id, String issuedBy);
     PassBookDTO returnItem(Long id, String returnedBy);
     PassBookDTO receiveItem(Long id, String receivedBy);
+    RequestPassBookDTO receiveItem(RequestPassBookDTO requestPassBookDTO);
+
 
     // Status-based queries
     List<PassBookDTO> findAvailableByBranch(String branchId);

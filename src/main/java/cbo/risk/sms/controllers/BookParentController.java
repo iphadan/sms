@@ -98,7 +98,12 @@ public class BookParentController {
                     response.setStartSerial(parent.getStartingSerial());
                     response.setEndSerial(parent.getEndingSerial());
                     response.setNumOfPad(parent.getNumOfPad());
+                    response.setFinished(parent.isFinished());
                     response.setUsed(parent.getUsed());
+                    response.setCreatedBy(parent.getCreatedBy());
+                    response.setBranchId(parent.getBranchId());
+                    response.setProcessId(parent.getProcessId());
+                    response.setSubProcessId(parent.getSubProcessId());
                     response.setAvailable(parent.getNumOfPad() - parent.getUsed());
                     return ResponseEntity.ok(response);
                 })
