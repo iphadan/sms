@@ -27,7 +27,16 @@ public class PassBookDTO extends BaseStockDTO {
     private Long bookParentId;
     private String issuedTo;
     private String issuedBy;
-    private String returnedBy;
+
+    private String createdBy;
+
+    private String createdById;
+
+
+
+    private String lastUpdatedBy;
+
+    private String lastUpdatedById;
 
     // Parent stats for convenience
     private Integer parentNumOfPad;

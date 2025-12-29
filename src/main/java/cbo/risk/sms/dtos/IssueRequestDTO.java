@@ -21,35 +21,13 @@ public class IssueRequestDTO {
     @NotBlank(message = "Branch ID is required")
     private String branchId;
 
-    public String getSerialNumber() {
-        return serialNumber;
-    }
+    private String createdBy;
 
-    public void setSerialNumber(String serialNumber) {
-        this.serialNumber = serialNumber;
-    }
+    private String createdById;
 
-    public String getIssuedTo() {
-        return issuedTo;
-    }
 
-    public void setIssuedTo(String issuedTo) {
-        this.issuedTo = issuedTo;
-    }
 
-    public String getIssuedBy() {
-        return issuedBy;
-    }
+    private String lastUpdatedBy;
 
-    public void setIssuedBy(String issuedBy) {
-        this.issuedBy = issuedBy;
-    }
-
-    public String getBranchId() {
-        return branchId;
-    }
-
-    public void setBranchId(String branchId) {
-        this.branchId = branchId;
-    }
+    private String lastUpdatedById;
 }

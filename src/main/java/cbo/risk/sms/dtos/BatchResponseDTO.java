@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.persistence.Column;
 import javax.validation.constraints.NotBlank;
 
 @Data
@@ -29,5 +30,14 @@ public class BatchResponseDTO {
     private String processId;
 
     private String createdBy;
+
+    private String createdById;
+
+
+
+    private String lastUpdatedBy;
+
+    private String lastUpdatedById;
+
 
 }

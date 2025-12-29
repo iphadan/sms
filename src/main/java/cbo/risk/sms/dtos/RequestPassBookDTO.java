@@ -26,6 +26,13 @@ public class RequestPassBookDTO  {
     private LocalDateTime issuedDate;
     private Long passBookId;
 
+    private String issuedBy;
+    private String receivedBy;
+    private String issuedById;
+    private String receivedById;
+
+    private String createdById;
+    private String lastUpdatedById;
 
     @NotBlank
     @Column(name ="ACCOUNT_NUMBER")

@@ -66,13 +66,7 @@ public class BookParentServiceImpl implements BookParentService {
 
         // 3. Create Parent with the new fields
         BookParent parent = createCheckBookParent(registrationDTO);
-        parent.setParentBookType(ParentBookType.valueOf(registrationDTO.getParentBookType().name()));
-        parent.setBatchReceivedDate(LocalDateTime.now());
-        parent.setCheckLeaveType(registrationDTO.getCheckBookLeaveType());
-        parent.setParentBookType(ParentBookType.CHECK_BOOK);
-        parent.setPassCheckType(registrationDTO.getCheckBookType().name());
-        System.out.println(registrationDTO.getNumOfPad());
-        System.out.println(parent.getNumOfPad());
+parent.setCheckLeaveType(registrationDTO.getCheckBookLeaveType());
         BookParent savedParent = bookParentRepository.save(parent);
 
         // 4. Generate individual checkbooks with their own start/end serial ranges
@@ -100,8 +94,7 @@ public class BookParentServiceImpl implements BookParentService {
 
         // 1. Create Parent
         BookParent parent = createParent(registrationDTO);
-        parent.setBatchReceivedDate(LocalDateTime.now());
-        parent.setParentBookType(ParentBookType.valueOf(registrationDTO.getParentBookType().name()));
+
         BookParent savedParent = bookParentRepository.save(parent);
 
         // 2. Generate serial numbers and create CPO children
@@ -116,7 +109,9 @@ public class BookParentServiceImpl implements BookParentService {
             cpo.setSerialNumber(serial); // Assuming you added serialNumber to Cpo model
             cpo.setBookParent(savedParent);
             cpo.setCreatedBy(registrationDTO.getCreatedBy());
-            cpo.setLastUpdatedBy(registrationDTO.getCreatedBy());
+            cpo.setCreatedById(registrationDTO.getCreatedById());
+            cpo.setLastUpdatedById(registrationDTO.getLastUpdatedById());
+            cpo.setLastUpdatedBy(registrationDTO.getLastUpdatedBy());
             cpo.setBranchId(registrationDTO.getBranchId());
             cpo.setSubProcessId(registrationDTO.getSubProcessId());
             cpo.setProcessId(registrationDTO.getProcessId());
@@ -140,8 +135,6 @@ public class BookParentServiceImpl implements BookParentService {
         System.out.println("1");
         // 1. Create Parent
         BookParent parent = createParent(registrationDTO);
-        parent.setBatchReceivedDate(LocalDateTime.now());
-        parent.setParentBookType(ParentBookType.valueOf(registrationDTO.getParentBookType().name()));
         parent.setPassCheckType(registrationDTO.getPassBookType().name());
         parent.setPassBookType(registrationDTO.getPassBookCategory().name());
         BookParent savedParent = bookParentRepository.save(parent);
@@ -160,7 +153,9 @@ public class BookParentServiceImpl implements BookParentService {
             passBook.setPassBookType(PassBookType.valueOf(registrationDTO.getPassBookType().name()));
             passBook.setPassBookCategory(PassBookCategory.valueOf(registrationDTO.getPassBookCategory().name()));
             passBook.setCreatedBy(registrationDTO.getCreatedBy());
-            passBook.setLastUpdatedBy(registrationDTO.getCreatedBy());
+            passBook.setCreatedById(registrationDTO.getCreatedById());
+            passBook.setLastUpdatedById(registrationDTO.getLastUpdatedById());
+            passBook.setLastUpdatedBy(registrationDTO.getLastUpdatedBy());
             passBook.setBranchId(registrationDTO.getBranchId());
             passBook.setSubProcessId(registrationDTO.getSubProcessId());
             passBook.setProcessId(registrationDTO.getProcessId());
@@ -409,8 +404,13 @@ public class BookParentServiceImpl implements BookParentService {
         parent.setBranchId(registrationDTO.getBranchId());
         parent.setSubProcessId(registrationDTO.getSubProcessId());
         parent.setProcessId(registrationDTO.getProcessId());
+        parent.setBatchReceivedDate(LocalDateTime.now());
+        parent.setParentBookType(ParentBookType.valueOf(registrationDTO.getParentBookType().name()));
+        parent.setLastUpdatedById(registrationDTO.getLastUpdatedById());
+        parent.setCreatedById(registrationDTO.getCreatedById());
         parent.setCreatedBy(registrationDTO.getCreatedBy());
-        parent.setLastUpdatedBy(registrationDTO.getCreatedBy());
+        parent.setLastUpdatedBy(registrationDTO.getLastUpdatedBy());
+
 
         return parent;
     }
@@ -441,8 +441,16 @@ public class BookParentServiceImpl implements BookParentService {
         parent.setBranchId(registrationDTO.getBranchId());
         parent.setSubProcessId(registrationDTO.getSubProcessId());
         parent.setProcessId(registrationDTO.getProcessId());
+        parent.setParentBookType(ParentBookType.valueOf(registrationDTO.getParentBookType().name()));
+        parent.setBatchReceivedDate(LocalDateTime.now());
+        parent.setCheckLeaveType(registrationDTO.getCheckBookLeaveType());
+        parent.setParentBookType(ParentBookType.CHECK_BOOK);
+        parent.setLastUpdatedById(registrationDTO.getLastUpdatedById());
+        parent.setCreatedById(registrationDTO.getCreatedById());
         parent.setCreatedBy(registrationDTO.getCreatedBy());
-        parent.setLastUpdatedBy(registrationDTO.getCreatedBy());
+        parent.setLastUpdatedBy(registrationDTO.getLastUpdatedBy());
+        parent.setPassCheckType(registrationDTO.getCheckBookType().name());
+
 
         return parent;
     }
@@ -750,9 +758,11 @@ public class BookParentServiceImpl implements BookParentService {
             checkBook.setBookParent(parent);
             checkBook.setCheckBookType(registrationDTO.getCheckBookType());
             checkBook.setCheckBookLeaveType(registrationDTO.getCheckBookLeaveType());
-//            checkBook.setReceivedDate(LocalDateTime.now());
             checkBook.setCreatedBy(registrationDTO.getCreatedBy());
-            checkBook.setLastUpdatedBy(registrationDTO.getCreatedBy());
+            checkBook.setCreatedById(registrationDTO.getCreatedById());
+            checkBook.setLastUpdatedById(registrationDTO.getLastUpdatedById());
+            checkBook.setLastUpdatedBy(registrationDTO.getLastUpdatedBy());
+
             checkBook.setBranchId(registrationDTO.getBranchId());
             checkBook.setSubProcessId(registrationDTO.getSubProcessId());
             checkBook.setProcessId(registrationDTO.getProcessId());

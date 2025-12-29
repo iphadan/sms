@@ -23,7 +23,10 @@ public class RequestPassBook {
     private String serialNum;
     private LocalDateTime receivedDate;
     private LocalDateTime issuedDate;
-    private LocalDateTime returnedDate;
+    private String issuedBy;
+    private String receivedBy;
+    private String issuedById;
+    private String receivedById;
     private PassBookType passBookType;
     private PassBookCategory passBookCategory;
     @NotBlank
@@ -47,6 +50,13 @@ public class RequestPassBook {
     @NotBlank
     @Column(nullable = false)
     private String lastUpdatedBy;
+    @NotBlank
+    @Column(nullable = false)
+    private String createdById;
+
+    @NotBlank
+    @Column(nullable = false)
+    private String lastUpdatedById;
     @Column(name = "CREATED_TS",nullable = false)
     @CreationTimestamp
     private LocalDateTime createdTimestamp;

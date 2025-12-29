@@ -27,7 +27,10 @@ private Long checkBookId;
     private int checkBookLeaveType;
     private LocalDateTime receivedDate;
     private LocalDateTime issuedDate;
-    private LocalDateTime returnedDate;
+    private String issuedBy;
+    private String receivedBy;
+    private String issuedById;
+    private String receivedById;
     @NotBlank
     @Column(name = "BRANCH_ID")
     private String branchId;
@@ -48,6 +51,12 @@ private String accountNumber;
     @NotBlank
     @Column(nullable = false)
     private String lastUpdatedBy;
+    @NotBlank
+    @Column(nullable = false)
+    private String createdById;
+    @NotBlank
+    @Column(nullable = false)
+    private String lastUpdatedById;
     @Column(name = "CREATED_TS",nullable = false)
     @CreationTimestamp
     private LocalDateTime createdTimestamp;

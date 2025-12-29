@@ -34,13 +34,16 @@ public class BookParentDTO {
     @Column(name = "PROCESS_ID")
     private String processId;
 
-    @NotBlank
-    @Column(nullable = false)
+
     private String createdBy;
 
-    @NotBlank
-    @Column(nullable = false)
+    private String createdById;
+
+
+
     private String lastUpdatedBy;
+
+    private String lastUpdatedById;
     @Column(name = "CREATED_TS",nullable = false)
     @CreationTimestamp
     private LocalDateTime createdTimestamp;

@@ -32,7 +32,13 @@ public class RequestCheckBookDTO extends BaseRequestDTO {
     private LocalDateTime modifiedTimestamp;
     private LocalDateTime receivedDate;
     private LocalDateTime issuedDate;
-    private LocalDateTime returnedDate;
+    private String issuedBy;
+    private String receivedBy;
+    private String issuedById;
+    private String receivedById;
+
+    private String createdById;
+ private String lastUpdatedById;
     private Long checkBookId;
 
     private String startSerialNumber;

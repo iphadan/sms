@@ -39,6 +39,14 @@ public class CheckBookCreateDTO {
     @NotBlank(message = "Process ID is required")
     private String processId;
 
-    @NotBlank(message = "Creator is required")
+
     private String createdBy;
+
+    private String createdById;
+
+
+
+    private String lastUpdatedBy;
+
+    private String lastUpdatedById;
 }

@@ -3,6 +3,7 @@ package cbo.risk.sms.dtos;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
+import java.time.LocalDateTime;
 
 @Data
 public class RequestCreateDTO {
@@ -17,6 +18,13 @@ public class RequestCreateDTO {
     @NotBlank(message = "Process ID is required")
     private String processId;
 
-    @NotBlank(message = "Creator is required")
-    private String createdBy;
+    private LocalDateTime receivedDate;
+    private LocalDateTime issuedDate;
+    private String issuedBy;
+    private String receivedBy;
+    private String issuedById;
+    private String receivedById;
+
+    private String createdById;
+    private String lastUpdatedById;
 }

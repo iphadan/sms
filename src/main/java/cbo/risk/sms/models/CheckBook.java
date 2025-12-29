@@ -60,6 +60,13 @@ public class CheckBook {
     @NotBlank
     @Column(nullable = false)
     private String lastUpdatedBy;
+    @NotBlank
+    @Column(nullable = false)
+    private String createdById;
+
+    @NotBlank
+    @Column(nullable = false)
+    private String lastUpdatedById;
     @Column(name = "CREATED_TS",nullable = false)
     @CreationTimestamp
     private LocalDateTime createdTimestamp;
@@ -76,6 +83,8 @@ public class CheckBook {
     private LocalDateTime receivedDate;
     private String issuedBy;
     private String receivedBy;
+    private String issuedById;
+    private String receivedById;
     private LocalDateTime issuedDate;
     private LocalDateTime returnedDate;
 

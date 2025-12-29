@@ -58,10 +58,17 @@ private String passBookType;
     @NotBlank
     @Column(nullable = false)
     private String createdBy;
+    @NotBlank
+    @Column(nullable = false)
+    private String createdById;
+
 
     @NotBlank
     @Column(nullable = false)
     private String lastUpdatedBy;
+    @NotBlank
+    @Column(nullable = false)
+    private String lastUpdatedById;
 
     @Column(name = "CREATED_TS", nullable = false)
     @CreationTimestamp
