@@ -1,8 +1,7 @@
 package cbo.risk.sms.controllers;
 
-import cbo.risk.sms.dtos.CpoCreateDTO;
-import cbo.risk.sms.dtos.CpoDTO;
-import cbo.risk.sms.dtos.CpoUpdateDTO;
+import cbo.risk.sms.dtos.*;
+import cbo.risk.sms.models.RequestCpo;
 import cbo.risk.sms.services.CpoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -108,6 +107,15 @@ public class CpoController {
         return ResponseEntity.ok(issued);
     }
 
+    @PostMapping("/issue")
+    @Operation(summary = "Issue a CheckBook")
+    public ResponseEntity<ResponseDTO<RequestCpoDTO>> issueCheckBook(
+            @RequestBody RequestCpoDTO requestCpoDTO) {
+        System.out.println(requestCpoDTO);
+        ResponseDTO<RequestCpoDTO> issued = cpoService.issueAvailableCpo(requestCpoDTO);
+        return ResponseEntity.ok(issued);
+    }
+
     @PostMapping("/{id}/return")
     @Operation(summary = "Return a CPO")
     public ResponseEntity<CpoDTO> returnCpo(
@@ -121,8 +129,8 @@ public class CpoController {
     @Operation(summary = "Receive a CPO")
     public ResponseEntity<CpoDTO> receiveCpo(
             @PathVariable Long id,
-            @RequestParam String receivedBy) {
-        CpoDTO received = cpoService.receiveItem(id, receivedBy);
+            @RequestBody RequestCpoDTO requestCpoDTO){
+        CpoDTO received = cpoService.receiveItem( requestCpoDTO);
         return ResponseEntity.ok(received);
     }
 

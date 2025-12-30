@@ -2,6 +2,7 @@ package cbo.risk.sms.repositories;
 
 import cbo.risk.sms.models.BookParent;
 import cbo.risk.sms.models.Cpo;
+import cbo.risk.sms.models.PassBook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,6 +17,7 @@ import java.util.Optional;
 public interface CpoRepository extends JpaRepository<Cpo, Long> {
 
     // Basic CRUD
+    List<Cpo> findByBranchIdOrderBySerialNumberAsc(String branchId);
     Optional<Cpo> findById(Long id);
 
     // Find by serial number

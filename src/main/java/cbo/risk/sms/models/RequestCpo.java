@@ -19,7 +19,7 @@ public class RequestCpo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 private Long cpoId;
-    private String serialNum;
+    private String serialNumber;
     private LocalDateTime receivedDate;
     private LocalDateTime issuedDate;
     private String issuedBy;

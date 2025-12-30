@@ -118,6 +118,7 @@ public class CheckBookController {
     @Operation(summary = "Issue a CheckBook")
     public ResponseEntity<ResponseDTO<RequestCheckBookDTO>> issueCheckBook(
             @RequestBody RequestCheckBookDTO requestCheckBookDTO) {
+        System.out.println(requestCheckBookDTO);
         ResponseDTO<RequestCheckBookDTO> issued = checkBookService.issueAvailableCheckBook(requestCheckBookDTO);
         return ResponseEntity.ok(issued);
     }

@@ -38,6 +38,8 @@ public class PassBook {
  private LocalDateTime returnedDate;
  private String issuedBy;
  private String receivedBy;
+ private String receivedById;
+ private String issuedById;
  @NotBlank
  @Column(name = "BRANCH_ID")
  private String branchId;

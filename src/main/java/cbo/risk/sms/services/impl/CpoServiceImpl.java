@@ -1,14 +1,13 @@
 package cbo.risk.sms.services.impl;
 
-import cbo.risk.sms.dtos.CpoCreateDTO;
-import cbo.risk.sms.dtos.CpoDTO;
-import cbo.risk.sms.dtos.CpoUpdateDTO;
+import cbo.risk.sms.dtos.*;
+import cbo.risk.sms.enums.ParentBookType;
 import cbo.risk.sms.exceptions.ResourceNotFoundException;
 import cbo.risk.sms.exceptions.BusinessRuleException;
-import cbo.risk.sms.models.BookParent;
-import cbo.risk.sms.models.Cpo;
+import cbo.risk.sms.models.*;
 import cbo.risk.sms.repositories.BookParentRepository;
 import cbo.risk.sms.repositories.CpoRepository;
+import cbo.risk.sms.repositories.RequestCpoRepository;
 import cbo.risk.sms.services.CpoService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -20,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -33,6 +33,137 @@ public class CpoServiceImpl implements CpoService {
     private final CpoRepository cpoRepository;
     private final BookParentRepository bookParentRepository;
     private final ModelMapper modelMapper;
+    private final RequestCpoRepository requestCpoRepository;
+@Override
+    @Transactional
+    public ResponseDTO<RequestCpoDTO> issueAvailableCpo(RequestCpoDTO request) {
+
+        log.info("Issuing CPO for branch: {}, account: {}, issued by: {}",
+                request.getBranchId(),
+                request.getAccountNumber(),
+                request.getCreatedBy());
+
+        // 1. Find next available passbook
+        Cpo availableCPO = findAndReserveNextAvailableCpo(request);
+        System.out.println(1);
+        // 2. Create request record
+        RequestCpo requestCpo = new RequestCpo();
+        requestCpo.setCpoId(availableCPO.getId());
+        requestCpo.setSerialNumber(availableCPO.getSerialNumber());
+        requestCpo.setBranchId(request.getBranchId());
+        requestCpo.setAccountNumber(request.getAccountNumber());
+        requestCpo.setProcessId(request.getProcessId());
+        requestCpo.setIssuedById(request.getIssuedById());
+        requestCpo.setIssuedBy(request.getIssuedBy());
+        requestCpo.setLastUpdatedById(request.getLastUpdatedById());
+        requestCpo.setLastUpdatedBy(request.getLastUpdatedBy());
+        requestCpo.setCreatedBy(request.getCreatedBy());
+        requestCpo.setCreatedById(request.getCreatedById());
+        requestCpo.setCreatedTimestamp(LocalDateTime.now());
+        requestCpo.setIssuedDate(LocalDateTime.now());
+        requestCpo.setModifiedTimestamp(LocalDateTime.now());
+        requestCpo.setSubProcessId(request.getSubProcessId());
+        System.out.println(2);
+        RequestCpo savedRequest =
+                requestCpoRepository.save(requestCpo);
+        System.out.println(3);
+        // 3. Update passbook status
+        availableCPO.setIssuedById(request.getIssuedById());
+        availableCPO.setIssuedBy(request.getIssuedBy());
+        availableCPO.setLastUpdatedBy(request.getLastUpdatedBy());
+        availableCPO.setLastUpdatedById(request.getLastUpdatedById());
+        availableCPO.setCreatedBy(request.getCreatedBy());
+        availableCPO.setCreatedById(request.getCreatedById());
+        availableCPO.setIssuedBy(request.getIssuedBy());
+        availableCPO.setIssuedById(request.getIssuedById());
+        availableCPO.setCreatedTimestamp(LocalDateTime.now());
+        availableCPO.setIssuedDate(LocalDateTime.now());
+        availableCPO.setModifiedTimestamp(LocalDateTime.now());
+        System.out.println(4);
+        cpoRepository.save(availableCPO);
+        System.out.println(5);
+
+
+        log.info("PassBook issued - Request ID: {}, PassBook ID: {}, Serial: {}",
+                savedRequest.getId(),
+                availableCPO.getId(),
+                availableCPO.getSerialNumber());
+
+        return createIssueResponse(savedRequest, availableCPO);
+    }
+    private ResponseDTO<RequestCpoDTO> createIssueResponse(
+            RequestCpo requestCpo,
+            Cpo cpo) {
+
+        RequestCpoDTO dto = new RequestCpoDTO();
+
+        dto.setId(requestCpo.getId());
+        dto.setCpoId(cpo.getId());
+        dto.setSerialNumber(requestCpo.getSerialNumber());
+        dto.setBranchId(requestCpo.getBranchId());
+        dto.setAccountNumber(requestCpo.getAccountNumber());
+        dto.setProcessId(requestCpo.getProcessId());
+        dto.setSubProcessId(requestCpo.getSubProcessId());
+        dto.setCreatedBy(requestCpo.getCreatedBy());
+        dto.setLastUpdatedBy(requestCpo.getLastUpdatedBy());
+        dto.setIssuedDate(requestCpo.getIssuedDate());
+        dto.setCreatedTimestamp(requestCpo.getCreatedTimestamp());
+        dto.setModifiedTimestamp(requestCpo.getModifiedTimestamp());
+        ResponseDTO<RequestCpoDTO> responseDTO = new ResponseDTO<>();
+        responseDTO.setResult(dto);
+        responseDTO.setStatus(true);
+        responseDTO.setMessage("CPO issued successfully");
+        return responseDTO;
+    }
+    private Cpo findAndReserveNextAvailableCpo(RequestCpoDTO request) {
+
+        Optional<BookParent>  availableParent = bookParentRepository.findFirstByBranchIdAndParentBookTypeAndFinishedFalseOrderByIdAsc(
+                request.getBranchId(), ParentBookType.CPO);
+        if(availableParent.isPresent()) {
+
+            List<Cpo> cpos = cpoRepository
+                    .findByBranchIdOrderBySerialNumberAsc(request.getBranchId());
+
+
+
+            cpos.sort(Comparator.comparingInt(this::extractPassBookNumber));
+
+            for (Cpo cpo : cpos) {
+
+                // Available = not yet issued
+                if (cpo.getIssuedDate() == null) {
+
+                    // Sequential rule
+                    if (isSequentiallyIssuable(cpo, cpos)) {
+                        return cpo;
+                    }
+                }
+            }
+        }
+
+        throw new BusinessRuleException(
+                String.format("No available Cpos found for branch %s",
+                        request.getBranchId()));
+    }
+    private boolean isSequentiallyIssuable(Cpo cpo, List<Cpo> cpos) {
+
+        int currentIndex = cpos.indexOf(cpo);
+
+        // First passbook can always be issued
+        if (currentIndex == 0) {
+            return true;
+        }
+
+        Cpo previousCpo= cpos.get(currentIndex - 1);
+
+
+        return previousCpo.getIssuedDate() != null;
+    }
+    private int extractPassBookNumber(Cpo cpo) {
+        // Examples: pas1, pas10, pas003
+        String serial = cpo.getSerialNumber();
+        return Integer.parseInt(serial.replaceAll("\\D+", ""));
+    }
 
     @Override
     @Transactional
@@ -322,11 +453,11 @@ public class CpoServiceImpl implements CpoService {
 
     @Override
     @Transactional
-    public CpoDTO receiveItem(Long id, String receivedBy) {
-        log.info("Receiving CPO with ID: {} by user: {}", id, receivedBy);
+    public CpoDTO receiveItem(RequestCpoDTO requestCpoDTO) {
+        log.info("Receiving CPO with ID: {} by user: {}", requestCpoDTO.getId(), requestCpoDTO.getReceivedBy());
 
-        Cpo cpo = cpoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("CPO", "id", id));
+        Cpo cpo = cpoRepository.findById(requestCpoDTO.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("CPO", "id", requestCpoDTO.getId()));
 
         // Validate if not received
         if (cpo.getReceivedDate() != null) {
@@ -334,9 +465,23 @@ public class CpoServiceImpl implements CpoService {
         }
 
         cpo.setReceivedDate(LocalDateTime.now());
-        cpo.setLastUpdatedBy(receivedBy);
+        cpo.setReceivedBy(requestCpoDTO.getReceivedBy());
+        cpo.setReceivedById(requestCpoDTO.getReceivedById());
+        RequestCpo requestCpo = requestCpoRepository.findById(requestCpoDTO.getId()).orElse(null);
+        System.out.println(requestCpo);
 
+        if(requestCpo == null ){
+            return null;
+        }
+        requestCpo.setReceivedDate(LocalDateTime.now());
+        requestCpo.setReceivedBy(requestCpoDTO.getReceivedBy());
+        requestCpo.setReceivedById(requestCpoDTO.getReceivedById());
+        requestCpoRepository.save(requestCpo);
         Cpo received = cpoRepository.save(cpo);
+        BookParent parent = cpo.getBookParent();
+        parent.setUsed(parent.getUsed() + 1);
+        parent.setLastIssuedChild(cpo.getId());
+        bookParentRepository.save(parent);
         log.info("CPO received: {}", received.getId());
 
         return convertToDTO(received);

@@ -410,8 +410,6 @@ parent.setCheckLeaveType(registrationDTO.getCheckBookLeaveType());
         parent.setCreatedById(registrationDTO.getCreatedById());
         parent.setCreatedBy(registrationDTO.getCreatedBy());
         parent.setLastUpdatedBy(registrationDTO.getLastUpdatedBy());
-
-
         return parent;
     }
     private BookParent createCheckBookParent(BatchRegistrationDTO registrationDTO) {

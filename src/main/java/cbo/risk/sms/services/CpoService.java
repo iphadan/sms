@@ -1,8 +1,6 @@
 package cbo.risk.sms.services;
 
-import cbo.risk.sms.dtos.CpoCreateDTO;
-import cbo.risk.sms.dtos.CpoDTO;
-import cbo.risk.sms.dtos.CpoUpdateDTO;
+import cbo.risk.sms.dtos.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -10,6 +8,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface CpoService {
+    ResponseDTO<RequestCpoDTO> issueAvailableCpo(RequestCpoDTO request);
+
 
     // CRUD Operations
     CpoDTO create(CpoCreateDTO createDTO);
@@ -27,7 +27,7 @@ public interface CpoService {
     // Business operations
     CpoDTO issueItem(Long id, String issuedBy);
     CpoDTO returnItem(Long id, String returnedBy);
-    CpoDTO receiveItem(Long id, String receivedBy);
+    CpoDTO receiveItem(RequestCpoDTO requestCpoDTO);
 
     // Status-based queries
     List<CpoDTO> findAvailableByBranch(String branchId);

@@ -30,13 +30,14 @@ public class CheckBookDTO extends BaseStockDTO {
     private String issuedBy;
 
     private String createdBy;
-
     private String createdById;
-
-
-
     private String lastUpdatedBy;
-
     private String lastUpdatedById;
+    private LocalDateTime receivedDate;
+    private String receivedBy;
+    private String issuedById;
+    private String receivedById;
+    private LocalDateTime issuedDate;
+    private LocalDateTime returnedDate;
 }
 

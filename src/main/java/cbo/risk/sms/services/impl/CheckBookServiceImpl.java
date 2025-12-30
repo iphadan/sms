@@ -19,16 +19,14 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -54,7 +52,7 @@ private RequestCheckBookRepository requestCheckBookRepository;
 
         // 1. Find the next available checkbook (sequential issuance)
         CheckBook availableCheckBook = findAndReserveNextAvailableCheckBook(request);
-
+        System.out.println("1");
         // 2. Create request record
         RequestCheckBook requestCheckBook = new RequestCheckBook();
         requestCheckBook.setCheckBookId(availableCheckBook.getId());
@@ -64,25 +62,31 @@ private RequestCheckBookRepository requestCheckBookRepository;
         requestCheckBook.setProcessId(request.getProcessId());
         requestCheckBook.setSubProcessId(request.getSubProcessId());
         requestCheckBook.setCreatedBy(request.getCreatedBy());
-        requestCheckBook.setLastUpdatedBy(request.getCreatedBy());
+        requestCheckBook.setCreatedTimestamp(LocalDateTime.now());
+        requestCheckBook.setLastUpdatedBy(request.getLastUpdatedBy());
+        requestCheckBook.setCreatedById(request.getCreatedById());
+        requestCheckBook.setLastUpdatedBy(request.getLastUpdatedBy());
+        requestCheckBook.setModifiedTimestamp(LocalDateTime.now());
+        requestCheckBook.setIssuedBy(request.getIssuedBy());
+        requestCheckBook.setIssuedDate(LocalDateTime.now());
+        requestCheckBook.setIssuedById(request.getIssuedById());
+        requestCheckBook.setLastUpdatedById(request.getLastUpdatedById());
         requestCheckBook.setIssuedDate(LocalDateTime.now());
         requestCheckBook.setAccountNumber(request.getAccountNumber());
 
         RequestCheckBook savedRequest = requestCheckBookRepository.save(requestCheckBook);
-
+        System.out.println(2);
         // 3. Update checkbook status
+        availableCheckBook.setIssuedBy(request.getIssuedBy());
+        availableCheckBook.setIssuedById(request.getIssuedById());
         availableCheckBook.setIssuedDate(LocalDateTime.now());
-        availableCheckBook.setLastUpdatedBy(request.getCreatedBy());
-        availableCheckBook.setIssuedBy(savedRequest.getCreatedBy());
+
+        availableCheckBook.setLastUpdatedBy(request.getLastUpdatedBy());
+        availableCheckBook.setLastUpdatedById(request.getLastUpdatedById());
+        availableCheckBook.setModifiedTimestamp(LocalDateTime.now());
         checkBookRepository.save(availableCheckBook);
 
-        // 4. Update parent's used count
-
-            BookParent parent = availableCheckBook.getBookParent();
-            parent.setUsed(parent.getUsed() + 1);
-            parent.setLastUpdatedBy(request.getCreatedBy());
-            bookParentRepository.save(parent);
-
+        System.out.println(4);
 
         log.info("CheckBook issued - Request ID: {}, CheckBook ID: {}, Serial: {} to {}",
                 savedRequest.getId(), availableCheckBook.getId(),
@@ -135,7 +139,7 @@ private RequestCheckBookRepository requestCheckBookRepository;
         // Find parent batches with available checkbooks using your query
 
             // Fallback: check any available parents
-          Optional<BookParent>  availableParent = bookParentRepository.findAvailableBookParent(
+          Optional<BookParent>  availableParent = bookParentRepository.findFirstByBranchIdAndCheckLeaveTypeAndParentBookTypeAndFinishedFalseOrderByIdAsc(
                     request.getBranchId(),CheckBookLeaveType.fromLeaves(request.getCheckBookLeaveType()) , ParentBookType.CHECK_BOOK);
 
 if(availableParent.isPresent()) {
@@ -483,32 +487,47 @@ if(availableParent.isPresent()) {
     public RequestCheckBookDTO receiveItem(RequestCheckBookDTO received) {
         log.info("Receiving CheckBook with ID: {} by user: {}", received.getId(), received.getLastUpdatedBy());
         System.out.println(received);
-        CheckBook checkBook = checkBookRepository.findById(received.getCheckBookId())
+        CheckBook checkBook = checkBookRepository.findById(received.getId())
                 .orElse(null);
         System.out.println(checkBook);
         if(checkBook == null ){
             return null;
         }
+        if (checkBook.getReceivedDate() != null) {
+            throw new BusinessRuleException("CheckBook is already received");
+        }
+        if(!Objects.equals(checkBook.getIssuedById(), received.getReceivedById())){
+            throw new BusinessRuleException("You can not Receive Check Book issued by CSO " + checkBook.getIssuedBy());
+
+        }
+        checkBook.setReceivedDate(LocalDateTime.now());
+        checkBook.setReceivedBy(received.getReceivedBy());
+        checkBook.setReceivedById(received.getReceivedById());
         RequestCheckBook requestCheckBook = requestCheckBookRepository.findById(received.getId()).orElse(null);
         System.out.println(requestCheckBook);
 
         if(requestCheckBook == null ){
             return null;
         }
+        requestCheckBook.setReceivedDate(LocalDateTime.now());
+        requestCheckBook.setReceivedBy(received.getReceivedBy());
+        requestCheckBook.setReceivedById(received.getReceivedById());
+
         // Validate if not received
         System.out.println("here1");
-        if (checkBook.getReceivedDate() != null) {
-            throw new BusinessRuleException("CheckBook is already received");
-        }
 
 
-        checkBook.setReceivedDate(LocalDateTime.now());
-        checkBook.setLastUpdatedBy(received.getLastUpdatedBy());
-        requestCheckBook.setLastUpdatedBy(received.getLastUpdatedBy());
-        requestCheckBook.setReceivedDate(LocalDateTime.now());
+
+
+
         System.out.println("here2");
-        checkBookRepository.save(checkBook);
+     CheckBook saved=   checkBookRepository.save(checkBook);
         System.out.println("here3");
+        BookParent bookParent =saved.getBookParent();
+
+        bookParent.setUsed(bookParent.getUsed() + 1);
+        bookParent.setLastIssuedChild(checkBook.getId());
+        bookParentRepository.save(bookParent);
        RequestCheckBook savedRequestCheckBook = requestCheckBookRepository.save(requestCheckBook);
         log.info("CheckBook received: {}", received.getId());
 

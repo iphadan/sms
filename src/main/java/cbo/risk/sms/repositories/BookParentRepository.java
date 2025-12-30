@@ -44,7 +44,7 @@ public interface BookParentRepository extends JpaRepository<BookParent, Long> {
       AND bp.checkLeaveType = :checkLeaveType
       AND bp.parentBookType = :parentBookType
       AND bp.finished = false
-      AND bp.numOfPad > bp.used
+      AND bp.numOfPad > bp.used ORDER BY bp.id ASC
 """)
     Optional<BookParent> findAvailableBookParent(
             @Param("branchId") String branchId,
@@ -52,7 +52,18 @@ public interface BookParentRepository extends JpaRepository<BookParent, Long> {
             @Param("parentBookType") ParentBookType parentBookType
     );
 
+    Optional<BookParent>
+    findFirstByBranchIdAndCheckLeaveTypeAndParentBookTypeAndFinishedFalseOrderByIdAsc(
+            String branchId,
+            CheckBookLeaveType checkLeaveType,
+            ParentBookType parentBookType
+    );
 
+    Optional<BookParent>
+    findFirstByBranchIdAndParentBookTypeAndFinishedFalseOrderByIdAsc(
+            String branchId,
+            ParentBookType parentBookType
+    );
     @Query("""
     SELECT bp
     FROM BookParent bp

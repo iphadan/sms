@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Data
 public class RequestCpoDTO  {
     private Long id;
-    private String serialNum;
+    private String serialNumber;
     private String branchId;
     private String subProcessId;
     private String processId;
@@ -28,13 +28,11 @@ public class RequestCpoDTO  {
     private String createdById;
     private String lastUpdatedById;
     private LocalDateTime returnedDate;
-    private Long checkBookId;
+    private Long cpoId;
 
     private String startSerialNumber;
     @NotBlank
     @Column(name ="ACCOUNT_NUMBER")
     private String accountNumber;
-    private String endSerialNumber;
-    private CheckBookType checkBookType;
-    private int checkBookLeaveType;
+
 }

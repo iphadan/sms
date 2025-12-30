@@ -7,9 +7,7 @@ import cbo.risk.sms.enums.PassBookCategory;
 import cbo.risk.sms.enums.PassBookType;
 import cbo.risk.sms.exceptions.ResourceNotFoundException;
 import cbo.risk.sms.exceptions.BusinessRuleException;
-import cbo.risk.sms.models.BookParent;
-import cbo.risk.sms.models.PassBook;
-import cbo.risk.sms.models.RequestPassBook;
+import cbo.risk.sms.models.*;
 import cbo.risk.sms.repositories.BookParentRepository;
 import cbo.risk.sms.repositories.PassBookRepository;
 import cbo.risk.sms.repositories.RequestPassBookRepository;
@@ -18,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -54,25 +53,46 @@ public class PassBookServiceImpl implements PassBookService {
         // 2. Create request record
         RequestPassBook requestPassBook = new RequestPassBook();
         requestPassBook.setPassBookId(availablePassBook.getId());
+        requestPassBook.setPassBookCategory(availablePassBook.getPassBookCategory());
+        requestPassBook.setPassBookType(availablePassBook.getPassBookType());
         requestPassBook.setSerialNum(availablePassBook.getSerialNumber());
         requestPassBook.setBranchId(request.getBranchId());
         requestPassBook.setAccountNumber(request.getAccountNumber());
         requestPassBook.setProcessId(request.getProcessId());
-        requestPassBook.setSubProcessId(request.getSubProcessId());
+        requestPassBook.setIssuedById(request.getIssuedById());
+        requestPassBook.setIssuedBy(request.getIssuedBy());
+        requestPassBook.setLastUpdatedById(request.getLastUpdatedById());
+        requestPassBook.setLastUpdatedBy(request.getLastUpdatedBy());
         requestPassBook.setCreatedBy(request.getCreatedBy());
-        requestPassBook.setLastUpdatedBy(request.getCreatedBy());
+        requestPassBook.setCreatedById(request.getCreatedById());
+        requestPassBook.setCreatedTimestamp(LocalDateTime.now());
         requestPassBook.setIssuedDate(LocalDateTime.now());
+        requestPassBook.setModifiedTimestamp(LocalDateTime.now());
+        requestPassBook.setSubProcessId(request.getSubProcessId());
         System.out.println(2);
         RequestPassBook savedRequest =
                 requestPassBookRepository.save(requestPassBook);
         System.out.println(3);
         // 3. Update passbook status
+        availablePassBook.setIssuedById(request.getIssuedById());
+        availablePassBook.setIssuedBy(request.getIssuedBy());
+        availablePassBook.setLastUpdatedBy(request.getLastUpdatedBy());
+        availablePassBook.setLastUpdatedById(request.getLastUpdatedById());
+        availablePassBook.setCreatedBy(request.getCreatedBy());
+        availablePassBook.setCreatedById(request.getCreatedById());
+        availablePassBook.setIssuedBy(request.getIssuedBy());
+        availablePassBook.setIssuedById(request.getIssuedById());
+        availablePassBook.setCreatedTimestamp(LocalDateTime.now());
         availablePassBook.setIssuedDate(LocalDateTime.now());
-        availablePassBook.setIssuedBy(request.getCreatedBy());
-        availablePassBook.setLastUpdatedBy(request.getCreatedBy());
+        availablePassBook.setModifiedTimestamp(LocalDateTime.now());
         System.out.println(4);
         passBookRepository.save(availablePassBook);
         System.out.println(5);
+        BookParent parent = availablePassBook.getBookParent();
+        parent.setUsed(parent.getUsed() + 1);
+        parent.setLastIssuedChild(availablePassBook.getId());
+        bookParentRepository.save(parent);
+
         log.info("PassBook issued - Request ID: {}, PassBook ID: {}, Serial: {}",
                 savedRequest.getId(),
                 availablePassBook.getId(),
@@ -501,17 +521,26 @@ responseDTO.setMessage("PassBook issued successfully");
         if (passBook.getReceivedDate() != null) {
             throw new BusinessRuleException("PassBook is already received");
         }
+        RequestPassBook requestPassBook = requestPassBookRepository.findById(request.getId()).orElse(null);
+        System.out.println(requestPassBook);
 
+        if(requestPassBook == null ){
+            return null;
+        }
+        requestPassBook.setReceivedDate(LocalDateTime.now());
+        requestPassBook.setReceivedBy(request.getReceivedBy());
+        requestPassBook.setReceivedById(request.getReceivedById());
+        requestPassBookRepository.save(requestPassBook);
+        // Validate if not received
         passBook.setReceivedDate(LocalDateTime.now());
-        passBook.setLastUpdatedBy(request.getLastUpdatedBy());
-BookParent bookParent = bookParentRepository.findById(passBook.getId()).orElse(null);
-if(bookParent == null){
-    return null;
-}
-bookParent.setUsed(bookParent.getUsed() + 1);
-//bookParent.setLastIssuedChild(passBook.getId());
-        bookParentRepository.save(bookParent);
+        passBook.setReceivedBy(request.getReceivedBy());
+        passBook.setReceivedById(request.getReceivedById());
+
         PassBook received = passBookRepository.save(passBook);
+        BookParent bookParent =received.getBookParent();
+        bookParent.setUsed(bookParent.getUsed() + 1);
+        bookParent.setLastIssuedChild(passBook.getId());
+        bookParentRepository.save(bookParent);
         log.info("PassBook received: {}", received.getId());
 
         return convertToRequestPassBookDTO(received);
